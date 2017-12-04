@@ -2,7 +2,7 @@ cscope.files
 cscope.out
 filenametags
 tags
-worksapce.vim
+workspace.vim
 workspace.viminfo
 *.uvgui.*
 *.bak
