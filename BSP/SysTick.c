@@ -3,7 +3,6 @@
 //#define USER_SYSTICK_INIT
 
 __IO uint32_t nTime;
-int SysTick_DelayFlag=0;
 
 void SysTick_Init(void)
 {
@@ -28,20 +27,16 @@ void SysTick_Init(void)
 void Delay_us(uint32_t xus)
 {
 	nTime=xus;
-	SysTick_DelayFlag = 1;
-	while(nTime != 0);  //等待nTime在SysTick异常服务程序减至零
-	SysTick_DelayFlag = 0;
+	while(nTime > 0);  //等待nTime在SysTick异常服务程序减至零
 }
 
 
 /*-----------------------------
   异常服务子程序
   -放在SysTick_Handler(void)里
-	-必须先判断SysTick_DelayFlag == 1
-	 是否成立，成立才执行该子程序
 ------------------------------*/
 void SysTick_DelayServer(void)
 {
-	if(nTime != 0)
+	if(nTime > 0)
 		nTime--;
 }

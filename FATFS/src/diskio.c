@@ -18,7 +18,7 @@
 //Definitions of SPI_FLASH
 #define FLASH_SECTOR_SIZE 512  //Flash在FATFS里的扇区大小
 #define FLASH_ERASE_SIZE  4096  //Flash扇区大小,FATFS里的簇大小
-#define FLASH_CAPACITY    8388608UL  //Flash磁盘大小（字节），剩余空间留给快速访问需求如CodePage转换表
+#define FLASH_CAPACITY    4194304UL  //Flash磁盘大小（字节），剩余空间留给快速访问需求如CodePage转换表
 
 SD_Error sd_err = SD_ERROR;
 SD_CardInfo sd_info;
@@ -70,12 +70,12 @@ DSTATUS disk_initialize (
         break;
       }
       resp = 0;
-      SD_GetCardInfo(&sd_info);
 			break;
 		case SPI_FLASH:
 			SPI_Flash_Config();  //端口初始化
+      SPI_GetDeviceID();
 			flash_id = SPI_GetFlashID();  //Flash上电并获取FlashID
-      printf("%s()@%d: flash id %04x\r\n", __func__, __LINE__, flash_id & 0xffff);
+      printf("spi flash id %06X\r\n", flash_id);
 			resp = 0;
 			break;
 	}
@@ -95,7 +95,6 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
-	DRESULT res;
 	SD_Error rerr;
   SDTransferState transtate;
 
@@ -153,7 +152,6 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
-	DRESULT res;
 	SD_Error werr;
   SDTransferState transtate;
 
@@ -191,6 +189,7 @@ DRESULT disk_write (
       return RES_OK;
 		
 		case SPI_FLASH:
+      printf("spi flash writed data size %d bytes\r\n", count*FLASH_SECTOR_SIZE);
 			SPI_Flash_WriteWithErase((uint8_t *)buff, sector*FLASH_SECTOR_SIZE, count*FLASH_SECTOR_SIZE);
 			return RES_OK;
 	}
@@ -234,9 +233,7 @@ DRESULT disk_ioctl (
               sd_info.CardCapacity = 1;
             }
           }
-          printf("Card capacity: %u KB\r\n", sd_info.CardCapacity);
 					*(DWORD *)buff = sd_info.CardCapacity * 2;  //获取扇区数
-          printf("sector count: %lu\r\n", *(DWORD *)buff);
 					res = RES_OK;
           break;
 			}

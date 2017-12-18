@@ -24,7 +24,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h"
 #include "SysTick.h"
-#include "stm32_eval_sdio_sd.h"
+#include "timer_event.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -125,9 +125,9 @@ void DebugMon_Handler(void)
   * @param  None
   * @retval None
   */
-void PendSV_Handler(void)
-{
-}
+//void PendSV_Handler(void)
+//{
+//}
 
 /**
   * @brief  This function handles SysTick Handler.
@@ -156,13 +156,17 @@ void SysTick_Handler(void)
 }*/
 
 /**
-  * @brief  This function handles SDIO interrupt request.
+  * @brief  This function handles TIM6 interrupt request.
   * @param  None
   * @retval None
   */
-void SDIO_IRQHandler(void)
+void TIM6_IRQHandler(void)
 {
-  SD_ProcessIRQSrc();
+  if(TIM_GetITStatus(TIM6, TIM_IT_Update) == SET) 
+  {
+    TIM_ClearITPendingBit(TIM6, TIM_IT_Update);
+    timer_event_schedule(5);  //定时单元为5ms
+  }
 }
 
 /**

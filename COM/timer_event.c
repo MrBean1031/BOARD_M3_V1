@@ -7,7 +7,7 @@
 
 #if PROT_METHOD == PROT_METHOD_MUTEX 
 #include "includes.h"
-typedef OS_TCB *prot_t;
+typedef OS_EVENT *prot_t;
 
 #elif PROT_METHOD == PROT_METHOD_CRITICAL
 #include "includes.h"
@@ -80,7 +80,7 @@ static int os_protect_pend(prot_t t)
     return 0;
   }
 #elif PROT_METHOD == PROT_METHOD_CRITICAL
-  OS_CRITICAL_ENTER();
+  OS_ENTER_CRITICAL();
   return 0;
 #else
   return 0;
@@ -97,7 +97,7 @@ static int os_protect_post(prot_t t)
   else
     return err;
 #elif PROT_METHOD == PROT_METHOD_CRITICAL
-  OS_CRITICAL_EXIT();
+  OS_EXIT_CRITICAL();
   return 0;
 #else
   return 0;
@@ -107,7 +107,6 @@ static int os_protect_post(prot_t t)
 void timer_event_init(void)
 {
   int i;
-
   using_list_head = NULL;
   stash_list_head = NULL;
   in_irq = 0;  //不在中断

@@ -3,12 +3,24 @@
 
 #include "stm32f10x.h"
 
-#define SPI1_NSS_HIGH  (GPIOA->ODR |=  GPIO_Pin_4)
-#define SPI1_NSS_LOW   (GPIOA->ODR &= ~GPIO_Pin_4)
+#define RCC_SPI_FlashClkCmd(sta) \
+  do { \
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, sta); \
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, sta); \
+  } while(0)
+#define FLASH_GPIOPort       GPIOA
+#define FLASH_GPIOPin_CS     GPIO_Pin_8
+#define FLASH_GPIOPin_SCK    GPIO_Pin_5
+#define FLASH_GPIOPin_MISO   GPIO_Pin_6
+#define FLASH_GPIOPin_MOSI   GPIO_Pin_7
+#define FLASH_SPIx           SPI1
+#define FLASH_NSS_HIGH       (FLASH_GPIOPort->ODR |=  FLASH_GPIOPin_CS)
+#define FLASH_NSS_LOW        (FLASH_GPIOPort->ODR &= ~FLASH_GPIOPin_CS)
+
 #define FLASH_DUMMY             0X00
 #define FLASH_PAGE_SIZE         256
 #define FLASH_STATUS_BUSY_MASK  0X01
-#define FLASH_BYTE_ADDR_MASK    0X0000FFu   
+#define FLASH_BYTE_ADDR_MASK    0X0000FFu
 #define FLASH_PAGE_ADDR_MASK    0X000F00u
 #define FLASH_SECTOR_ADDR_MASK  0X00F000u
 #define FLASH_BLOCK_ADDR_MASK   0XFF0000u
@@ -28,7 +40,7 @@
 #define SECTOR_ERASE        0X20
 #define CHIP_ERASE          0XC7
 #define POWER_DOWN          0XB9
-#define RPD_DEVICE_ID       0XAB
+#define RPD_DEVICE_ID       0XAB  //release power down
 #define MANUFACTURER_ID     0X90
 #define JEDEC_ID            0X9F
 

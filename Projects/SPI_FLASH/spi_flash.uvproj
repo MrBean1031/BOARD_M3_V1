@@ -12,14 +12,14 @@
       <ToolsetName>ARM-ADS</ToolsetName>
       <TargetOption>
         <TargetCommonOption>
-          <Device>STM32F103VE</Device>
+          <Device>STM32F103RC</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <Cpu>IROM(0x08000000,0x80000) IRAM(0x20000000,0x10000) CPUTYPE("Cortex-M3") CLOCK(72000000) ELITTLE</Cpu>
+          <Cpu>IROM(0x08000000,0x40000) IRAM(0x20000000,0xC000) CPUTYPE("Cortex-M3") CLOCK(72000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
-          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0STM32F10x_512 -FS08000000 -FL080000 -FP0($$Device:STM32F103VE$Flash\STM32F10x_512.FLM))</FlashDriverDll>
-          <DeviceId>4225</DeviceId>
-          <RegisterFile>$$Device:STM32F103VE$Device\Include\stm32f10x.h</RegisterFile>
+          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0STM32F10x_512 -FS08000000 -FL080000 -FP0($$Device:STM32F103RC$Flash\STM32F10x_512.FLM))</FlashDriverDll>
+          <DeviceId>4230</DeviceId>
+          <RegisterFile>$$Device:STM32F103RC$Device\Include\stm32f10x.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
           <Asm></Asm>
@@ -29,7 +29,7 @@
           <SLE66CMisc></SLE66CMisc>
           <SLE66AMisc></SLE66AMisc>
           <SLE66LinkerMisc></SLE66LinkerMisc>
-          <SFDFile>$$Device:STM32F103VE$SVD\STM32F103xx.svd</SFDFile>
+          <SFDFile>$$Device:STM32F103RC$SVD\STM32F103xx.svd</SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
@@ -45,7 +45,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>.\OBJ\</OutputDirectory>
-          <OutputName>timer_event</OutputName>
+          <OutputName>spi_flash</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
@@ -104,11 +104,11 @@
           <SimDllName>SARMCM3.DLL</SimDllName>
           <SimDllArguments> -REMAP</SimDllArguments>
           <SimDlgDll>DARMSTM.DLL</SimDlgDll>
-          <SimDlgDllArguments>-pSTM32F103VE</SimDlgDllArguments>
+          <SimDlgDllArguments>-pSTM32F103RC</SimDlgDllArguments>
           <TargetDllName>SARMCM3.DLL</TargetDllName>
           <TargetDllArguments></TargetDllArguments>
           <TargetDlgDll>TARMSTM.DLL</TargetDlgDll>
-          <TargetDlgDllArguments>-pSTM32F103VE</TargetDlgDllArguments>
+          <TargetDlgDllArguments>-pSTM32F103RC</TargetDlgDllArguments>
         </DllOption>
         <DebugOption>
           <OPTHX>
@@ -119,7 +119,7 @@
             <Oh166RecLen>16</Oh166RecLen>
           </OPTHX>
           <Simulator>
-            <UseSimulator>1</UseSimulator>
+            <UseSimulator>0</UseSimulator>
             <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
             <RunToMain>1</RunToMain>
             <RestoreBreakpoints>1</RestoreBreakpoints>
@@ -130,7 +130,7 @@
             <LimitSpeedToRealTime>0</LimitSpeedToRealTime>
           </Simulator>
           <Target>
-            <UseTarget>0</UseTarget>
+            <UseTarget>1</UseTarget>
             <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
             <RunToMain>1</RunToMain>
             <RestoreBreakpoints>1</RestoreBreakpoints>
@@ -143,7 +143,7 @@
             <RestoreTracepoints>1</RestoreTracepoints>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>0</TargetSelection>
+          <TargetSelection>6</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -157,7 +157,7 @@
             <PeripheralDll></PeripheralDll>
             <PeripheralDllArguments></PeripheralDllArguments>
             <InitializationFile></InitializationFile>
-            <Driver>BIN\UL2CM3.DLL</Driver>
+            <Driver>Segger\JL2CM3.dll</Driver>
           </TargetDlls>
         </DebugOption>
         <Utilities>
@@ -171,7 +171,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -276,12 +276,12 @@
               <IRAM>
                 <Type>0</Type>
                 <StartAddress>0x20000000</StartAddress>
-                <Size>0x10000</Size>
+                <Size>0xc000</Size>
               </IRAM>
               <IROM>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x80000</Size>
+                <Size>0x40000</Size>
               </IROM>
               <XRAM>
                 <Type>0</Type>
@@ -306,7 +306,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x80000</Size>
+                <Size>0x40000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -331,7 +331,7 @@
               <OCR_RVCT9>
                 <Type>0</Type>
                 <StartAddress>0x20000000</StartAddress>
-                <Size>0x10000</Size>
+                <Size>0xc000</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -361,7 +361,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_HD</Define>
               <Undefine></Undefine>
-              <IncludePath>.\APP;..\..\CMSIS;..\..\STM32F10x_SthPeriph\inc;..\..\BSP;..\..\COM;..\..\UCOSII\CONFIG;..\..\UCOSII\CORE;..\..\UCOSII\PORT</IncludePath>
+              <IncludePath>.\APP;..\..\CMSIS;..\..\STM32F10x_SthPeriph\inc;..\..\BSP;..\..\COM</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -425,14 +425,14 @@
               <FilePath>..\..\CMSIS\core_cm3.c</FilePath>
             </File>
             <File>
-              <FileName>system_stm32f10x.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\CMSIS\system_stm32f10x.c</FilePath>
-            </File>
-            <File>
               <FileName>startup_stm32f10x_hd.s</FileName>
               <FileType>2</FileType>
               <FilePath>..\..\CMSIS\startup_stm32f10x_hd.s</FilePath>
+            </File>
+            <File>
+              <FileName>system_stm32f10x.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\CMSIS\system_stm32f10x.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -560,11 +560,6 @@
           <GroupName>BSP</GroupName>
           <Files>
             <File>
-              <FileName>timer6.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\BSP\timer6.c</FilePath>
-            </File>
-            <File>
               <FileName>usart.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\BSP\usart.c</FilePath>
@@ -575,19 +570,19 @@
               <FilePath>..\..\BSP\led.c</FilePath>
             </File>
             <File>
-              <FileName>SysTick_OS.c</FileName>
+              <FileName>spi_flash.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\BSP\SysTick_OS.c</FilePath>
+              <FilePath>..\..\BSP\spi_flash.c</FilePath>
             </File>
             <File>
-              <FileName>delay_tim.c</FileName>
+              <FileName>SysTick.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\BSP\delay_tim.c</FilePath>
+              <FilePath>..\..\BSP\SysTick.c</FilePath>
             </File>
             <File>
-              <FileName>global.c</FileName>
+              <FileName>timer6.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\BSP\global.c</FilePath>
+              <FilePath>..\..\BSP\timer6.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -598,96 +593,6 @@
               <FileName>timer_event.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\COM\timer_event.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>UCOSII_CONFIG</GroupName>
-          <Files>
-            <File>
-              <FileName>includes.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\..\UCOSII\CONFIG\includes.h</FilePath>
-            </File>
-            <File>
-              <FileName>os_cfg.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\..\UCOSII\CONFIG\os_cfg.h</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>UCOSII_CORE</GroupName>
-          <Files>
-            <File>
-              <FileName>os_core.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_core.c</FilePath>
-            </File>
-            <File>
-              <FileName>os_flag.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_flag.c</FilePath>
-            </File>
-            <File>
-              <FileName>os_mbox.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_mbox.c</FilePath>
-            </File>
-            <File>
-              <FileName>os_mem.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_mem.c</FilePath>
-            </File>
-            <File>
-              <FileName>os_mutex.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_mutex.c</FilePath>
-            </File>
-            <File>
-              <FileName>os_q.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_q.c</FilePath>
-            </File>
-            <File>
-              <FileName>os_sem.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_sem.c</FilePath>
-            </File>
-            <File>
-              <FileName>os_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>os_time.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_time.c</FilePath>
-            </File>
-            <File>
-              <FileName>os_tmr.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_tmr.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>UCOSII_PORT</GroupName>
-          <Files>
-            <File>
-              <FileName>os_cpu_a.asm</FileName>
-              <FileType>2</FileType>
-              <FilePath>..\..\UCOSII\PORT\os_cpu_a.asm</FilePath>
-            </File>
-            <File>
-              <FileName>os_cpu_c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\PORT\os_cpu_c.c</FilePath>
-            </File>
-            <File>
-              <FileName>os_dbg.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\PORT\os_dbg.c</FilePath>
             </File>
           </Files>
         </Group>

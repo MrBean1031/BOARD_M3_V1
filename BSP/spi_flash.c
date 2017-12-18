@@ -4,31 +4,32 @@
 #include "spi_flash.h"
 
 u8 flashbuf[4096]={0};  //SPI_Flash_WriteWithErase()读写缓冲区
+u32 cur_sec_addr;
+u16 bitmap_page;
 
 void SPI_Flash_Config(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	SPI_InitTypeDef SPI_InitStructure;
 	
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_SPI1, ENABLE);
-	
+  RCC_SPI_FlashClkCmd(ENABLE);
 	/*Configure SPI1_NSS as general purpose push-pull output*/
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
+	GPIO_InitStructure.GPIO_Pin = FLASH_GPIOPin_CS;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_Init(FLASH_GPIOPort, &GPIO_InitStructure);
 	
 	/*Configure SPI1_SCK and SPI1_MOSI as alternative function push-pull output*/
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5|GPIO_Pin_7;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = FLASH_GPIOPin_SCK | FLASH_GPIOPin_MOSI;
+	GPIO_Init(FLASH_GPIOPort, &GPIO_InitStructure);
 	
 	/*Configure SPI1_MISO as floating input*/
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = FLASH_GPIOPin_MISO;
+	GPIO_Init(FLASH_GPIOPort, &GPIO_InitStructure);
 	
-	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;  //SPI Clock:18MHz
+	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
 	SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;  //Idle State: HIGH
 	SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;  //Even edge sample
 	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
@@ -37,60 +38,62 @@ void SPI_Flash_Config(void)
 	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;  //全双工模式
 	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
 	SPI_InitStructure.SPI_CRCPolynomial = 7;
-	SPI_Init(SPI1, &SPI_InitStructure);
+	SPI_Init(FLASH_SPIx, &SPI_InitStructure);
 	
-	SPI_Cmd(SPI1,ENABLE);
-	SPI1_NSS_HIGH;
+	SPI_Cmd(FLASH_SPIx, ENABLE);
+	FLASH_NSS_HIGH;
+  cur_sec_addr = 0;
+  bitmap_page = 0xffff;  //擦除已写入位图
 }
 
 uint8_t SPI_Flash_Transmit(uint8_t TxData)
 {
-	while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
-	SPI_I2S_SendData(SPI1, TxData);
+	while(SPI_I2S_GetFlagStatus(FLASH_SPIx, SPI_I2S_FLAG_TXE) == RESET);
+	SPI_I2S_SendData(FLASH_SPIx, TxData);
 	
-	while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE) == RESET);
-	return SPI_I2S_ReceiveData(SPI1);
+	while(SPI_I2S_GetFlagStatus(FLASH_SPIx, SPI_I2S_FLAG_RXNE) == RESET);
+	return SPI_I2S_ReceiveData(FLASH_SPIx);
 }
 
 uint8_t SPI_GetDeviceID(void)
 {
 	uint32_t temp;
-	SPI1_NSS_LOW;
+	FLASH_NSS_LOW;
 	SPI_Flash_Transmit(RPD_DEVICE_ID);
 	SPI_Flash_Transmit(FLASH_DUMMY);
 	SPI_Flash_Transmit(FLASH_DUMMY);
 	SPI_Flash_Transmit(FLASH_DUMMY);
 	temp = SPI_Flash_Transmit(FLASH_DUMMY);
-	SPI1_NSS_HIGH;
+	FLASH_NSS_HIGH;
 	return temp;
 }
 
 uint32_t SPI_GetFlashID(void)
 {
 	uint32_t temp=0,temp0,temp1,temp2;
-	SPI1_NSS_LOW;
+	FLASH_NSS_LOW;
 	SPI_Flash_Transmit(JEDEC_ID);
 	temp0 = SPI_Flash_Transmit(FLASH_DUMMY);  //M7  -M0
 	temp1 = SPI_Flash_Transmit(FLASH_DUMMY);  //ID15-ID8
 	temp2 = SPI_Flash_Transmit(FLASH_DUMMY);  //ID7 -ID0
-	SPI1_NSS_HIGH;
+	FLASH_NSS_HIGH;
 	temp = (temp0<<16) + (temp1<<8) + temp2;
 	return temp;
 }
 
 void SPI_Flash_WaitForWriteEnd(void)
 {
-	SPI1_NSS_LOW;
+	FLASH_NSS_LOW;
 	SPI_Flash_Transmit(READ_STATUS_REG);
 	while(SPI_Flash_Transmit(FLASH_DUMMY) & FLASH_STATUS_BUSY_MASK);
-	SPI1_NSS_HIGH;
+	FLASH_NSS_HIGH;
 }
 
 void SPI_Flash_WriteEnable(void)
 {
-	SPI1_NSS_LOW;
+	FLASH_NSS_LOW;
 	SPI_Flash_Transmit(WRITE_ENABLE);
-	SPI1_NSS_HIGH;
+	FLASH_NSS_HIGH;
 }
 
 void SPI_Flash_EraseSector(uint32_t SectorAddr)
@@ -98,12 +101,12 @@ void SPI_Flash_EraseSector(uint32_t SectorAddr)
 	SPI_Flash_WaitForWriteEnd();
 	SPI_Flash_WriteEnable();
 	
-	SPI1_NSS_LOW;
+	FLASH_NSS_LOW;
 	SPI_Flash_Transmit(SECTOR_ERASE);
 	SPI_Flash_Transmit((SectorAddr&0XFF0000u)>>16);
 	SPI_Flash_Transmit((SectorAddr&0X00FF00u)>>8);
 	SPI_Flash_Transmit(SectorAddr&0X0000FFu);
-	SPI1_NSS_HIGH;
+	FLASH_NSS_HIGH;
 }
 
 void SPI_Flash_PageWrite(uint8_t* buffer, uint32_t WriteAddr, uint32_t BytesToWrite)
@@ -111,7 +114,7 @@ void SPI_Flash_PageWrite(uint8_t* buffer, uint32_t WriteAddr, uint32_t BytesToWr
 	SPI_Flash_WaitForWriteEnd();
 	SPI_Flash_WriteEnable();
 	
-	SPI1_NSS_LOW;
+	FLASH_NSS_LOW;
 	SPI_Flash_Transmit(PAGE_PROGRAM);
 	SPI_Flash_Transmit((WriteAddr&0XFF0000u)>>16);
 	SPI_Flash_Transmit((WriteAddr&0X00FF00u)>>8);
@@ -121,7 +124,7 @@ void SPI_Flash_PageWrite(uint8_t* buffer, uint32_t WriteAddr, uint32_t BytesToWr
 		SPI_Flash_Transmit(*buffer);
 		buffer++;
 	}
-	SPI1_NSS_HIGH;
+	FLASH_NSS_HIGH;
 }
 
 void SPI_Flash_BufferWrite(uint8_t* buffer, uint32_t WriteAddr, uint32_t BytesToWrite)
@@ -151,28 +154,17 @@ void SPI_Flash_BufferWrite(uint8_t* buffer, uint32_t WriteAddr, uint32_t BytesTo
 	/*WriteAddr isn't aligned to flash_page*/
 	else
 	{
-		if(NumOfPage == 0)
-		{
-			SPI_Flash_PageWrite(buffer, WriteAddr, count);
-			buffer += count;
-			WriteAddr += count;
-			if(NumOfSingle-count > 0)
-				SPI_Flash_PageWrite(buffer, WriteAddr ,NumOfSingle-count);
-		}
-		else
-		{
-			SPI_Flash_PageWrite(buffer, WriteAddr, count);
-			buffer += count;
-			WriteAddr += count;
-			while(NumOfPage--)
-			{
-				SPI_Flash_PageWrite(buffer, WriteAddr, FLASH_PAGE_SIZE);
-				buffer += FLASH_PAGE_SIZE;
-				WriteAddr += FLASH_PAGE_SIZE;
-			}
-			if(NumOfSingle-count > 0)
-				SPI_Flash_PageWrite(buffer, WriteAddr, NumOfSingle-count);
-		}
+    SPI_Flash_PageWrite(buffer, WriteAddr, count);
+    buffer += count;
+    WriteAddr += count;
+    while(NumOfPage--)
+    {
+      SPI_Flash_PageWrite(buffer, WriteAddr, FLASH_PAGE_SIZE);
+      buffer += FLASH_PAGE_SIZE;
+      WriteAddr += FLASH_PAGE_SIZE;
+    }
+    if(NumOfSingle-count > 0)
+      SPI_Flash_PageWrite(buffer, WriteAddr, NumOfSingle-count);
 	}
 }
 
@@ -180,7 +172,7 @@ void SPI_Flash_BufferRead(uint8_t* buffer, uint32_t ReadAddr, uint32_t BytesToRe
 {
 	SPI_Flash_WaitForWriteEnd();
 	
-	SPI1_NSS_LOW;
+	FLASH_NSS_LOW;
 	SPI_Flash_Transmit(READ_DATA);
 	SPI_Flash_Transmit((ReadAddr&0XFF0000u)>>16);
 	SPI_Flash_Transmit((ReadAddr&0X00FF00u)>>8);
@@ -190,7 +182,7 @@ void SPI_Flash_BufferRead(uint8_t* buffer, uint32_t ReadAddr, uint32_t BytesToRe
 		*buffer = SPI_Flash_Transmit(FLASH_DUMMY);
 		buffer++;
 	}
-	SPI1_NSS_HIGH;
+	FLASH_NSS_HIGH;
 }
 
 void SPI_Flash_AddressResolve(uint32_t FlashAddr, Flash_Address* ResolveAddr)
@@ -213,46 +205,74 @@ void SPI_Flash_AddressResolve(uint32_t FlashAddr, Flash_Address* ResolveAddr)
 
 u8 SPI_Flash_WriteWithErase(uint8_t* buffer, uint32_t WriteAddr, uint32_t BytesToWrite)
 {
-	u32 secoffset=0, secremain=0;
+	u32 secoffset=0, secremain=0, len;
 	Flash_Address flashaddr;
 	u32 i;
-	secoffset = WriteAddr%4096;  //扇区内偏移地址
-	secremain = 4096-secoffset;  //扇区剩余字节数
-	SPI_Flash_AddressResolve(WriteAddr, &flashaddr);
-	if(secoffset != 0)  //不对齐扇区边界
-	{
-		SPI_Flash_BufferRead(flashbuf, flashaddr.SectorAddr, 4096);  //读取1扇区内容到缓冲区
-		SPI_Flash_EraseSector(flashaddr.SectorAddr);  //擦除当前4k扇区
-		if(BytesToWrite <= secremain)
-		{
-			for(i=0; i<BytesToWrite; i++)
-				flashbuf[secoffset+i] = *(buffer+i);  //改
-			SPI_Flash_BufferWrite(flashbuf, flashaddr.SectorAddr, 4096);  //回写数据
-			return 0;
-		}
-		else
-		{
-			for(i=0; i<secremain; i++)
-				flashbuf[secoffset+i] = *(buffer+i);  //改
-			SPI_Flash_BufferWrite(flashbuf, flashaddr.SectorAddr, 4096);  //回写数据
-			buffer += secremain;
-			WriteAddr += secremain;
-			BytesToWrite -= secremain;
-		}
-	}
-	while(BytesToWrite > 4096)
-	{
-		SPI_Flash_EraseSector(flashaddr.SectorAddr);
-		SPI_Flash_BufferWrite(buffer, WriteAddr, 4096);
-		buffer += 4096;
-		WriteAddr += 4096;
-		BytesToWrite -= 4096;
-	}
-	SPI_Flash_AddressResolve(WriteAddr, &flashaddr);
-	SPI_Flash_BufferRead(flashbuf, flashaddr.SectorAddr, 4096);  //读取1扇区到缓冲区
-	SPI_Flash_EraseSector(flashaddr.SectorAddr);  //擦除当前扇区
-	for(i=0; i<BytesToWrite; i++)
-		flashbuf[i] = *(buffer+i);  //改
-	SPI_Flash_BufferWrite(flashbuf, flashaddr.SectorAddr, 4096);
+  u16 bitmap;
+
+  while(BytesToWrite)
+  {
+    secoffset = WriteAddr % 4096;
+    if(secoffset)
+    {
+      SPI_Flash_AddressResolve(WriteAddr, &flashaddr);
+      secremain = 4096 - secoffset;
+      len = BytesToWrite > secremain ? secremain : BytesToWrite;
+      bitmap = ~(0xffff << (len / FLASH_PAGE_SIZE + !!(len % FLASH_PAGE_SIZE)));
+      if(flashaddr.SectorAddr == cur_sec_addr)
+      {
+        if((bitmap_page & (bitmap << flashaddr.PageNum)) == 0)
+        {
+          bitmap_page |= bitmap << flashaddr.PageNum;
+          SPI_Flash_BufferWrite(buffer, WriteAddr, len);
+          buffer += len;
+          WriteAddr += len;
+          BytesToWrite -= len;
+          continue;
+        }
+      }
+      else
+      {
+        cur_sec_addr = flashaddr.SectorAddr;
+        bitmap_page = 0;
+      }
+      bitmap_page |= bitmap << flashaddr.PageNum;
+      SPI_Flash_BufferRead(flashbuf, flashaddr.SectorAddr, 4096);  //读取
+      SPI_Flash_EraseSector(flashaddr.SectorAddr);  //擦除
+      for (i=0; i<len; i++)
+      {
+        flashbuf[secoffset + i] = *(buffer + i);  //修改
+      }
+      SPI_Flash_BufferWrite(flashbuf, flashaddr.SectorAddr, 4096);  //写入
+      buffer += len;
+      WriteAddr += len;
+      BytesToWrite -= len;
+    }
+    else
+    {
+      len = BytesToWrite > 4096 ? 4096 : BytesToWrite;
+      bitmap = ~(0xffff << (len / FLASH_PAGE_SIZE + !!(len % FLASH_PAGE_SIZE)));
+      cur_sec_addr = WriteAddr;
+      bitmap_page = bitmap;
+      if (len < 4096)
+      {
+        SPI_Flash_BufferRead(flashbuf, WriteAddr, 4096);  //读取
+        SPI_Flash_EraseSector(WriteAddr);  //擦除
+        for (i=0; i<len; i++)
+        {
+          flashbuf[i] = *(buffer + i);  //修改
+        }
+        SPI_Flash_BufferWrite(flashbuf, WriteAddr, 4096);  //写入
+      }
+      else
+      {
+        SPI_Flash_EraseSector(WriteAddr);
+        SPI_Flash_BufferWrite(buffer, WriteAddr, 4096);
+      }
+      buffer += len;
+      WriteAddr += len;
+      BytesToWrite -= len;
+    }
+  }
 	return 0;
 }
