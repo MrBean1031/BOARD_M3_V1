@@ -9,6 +9,8 @@
 #define FORMAT_BUFF_SIZE  4096
 uint8_t format_buff[FORMAT_BUFF_SIZE];
 
+uint8_t buf_in[512], buf_out[512];
+
 #if _LFN_UNICODE==1
 void StrConvert_GBK2Uni(char* psrc, u16* pdst)
 {
@@ -252,7 +254,7 @@ void fat_update_uni2gbk(TCHAR* path)
     }
     SPI_Flash_WriteWithErase(fbuff, FLASH_UNIGBK_BASE_ADDR+offset, br);  
     offset += br;
-    printf("%d%% >> ", (int)((float)updatefile.fptr/fileinfo.fsize*100));
+    printf("%d%% -> ", (int)((float)updatefile.fptr/fileinfo.fsize*100));
   } while(f_eof(&updatefile) == 0);
   printf("\r\nComplete to update codepage from file %s.\r\n", path);
   f_close(&updatefile);
@@ -260,11 +262,11 @@ void fat_update_uni2gbk(TCHAR* path)
 
 void buffer_fill(uint8_t *buf, uint32_t bufsize, uint8_t offset)
 {
-  uint8_t i;
+  uint32_t i;
   
   for(i=0; i<bufsize; i++)
   {
-    *(buf+i) = (uint8_t)(offset + i);
+    *(buf + i) = offset + i;
   }
 }
 
@@ -279,8 +281,6 @@ int buffer_compare(uint8_t *buf1, uint8_t *buf2, uint32_t bufsize)
   }
   return 1;
 }
-
-uint8_t rbuf[512] = {0}, wbuf[512] = {0};
 
 void fat_flashtest()
 {
@@ -300,15 +300,15 @@ void fat_flashtest()
     return;
   }
   printf("Open file in flash succeed.\r\n");
-  //buffer_fill(wbuf, 512, 0xA);
-  puts("a\r\n");
-  result = f_write(&myfile, wbuf, 512, &bw);
-  puts("b\r\n");
+  buffer_fill(buf_in, 512, 0);
+  puts("a");
+  result = f_write(&myfile, buf_in, 512, &bw);
+  puts("b");
   f_lseek(&myfile, 0);  //½«ÎÄ¼þ¶ÁÐ´Ö¸Õë¹éÁã
-  puts("c\r\n");
-  result = f_read(&myfile, rbuf, 512, &br);
+  puts("c");
+  result = f_read(&myfile, buf_out, 512, &br);
   puts("d\r\n");
-  if(bw && br && bw == br && buffer_compare(wbuf, rbuf, 512)) {
+  if(bw && br && bw == br && buffer_compare(buf_in, buf_out, 512)) {
     puts("fat_flashtest(): read/write test past\r\n");
   } else {
     puts("fat_flashtest(): read/write test fail\r\n");
@@ -359,18 +359,21 @@ int main(void)
   
 	result = f_mount(&sd_card, _T("0:"), 1);  //¹ÒÔØSD¿¨
 	if(result != FR_OK) {
-		printf("Mount SD_CARD failed, error code %d\r\n", result);
-  }
-  if(result == FR_NO_FILESYSTEM) {
-    result = f_mkfs(_T("0:"), FM_FAT | FM_FAT32, 4096, format_buff, FORMAT_BUFF_SIZE);
-    if(result != FR_OK) {
-      printf("format sd card error, error code %d\r\n", result);
-      goto __jump;
-    }
-    result = f_mount(&sd_card, _T("0:"), 1);
-    if(result != FR_OK) {
-      printf("remount sd card fail\r\n");
-      goto __jump;
+		printf("Mount SD_CARD failed, error code %02x\r\n", result); 
+    if(result == FR_NO_FILESYSTEM) {
+      result = f_mkfs(_T("0:"), FM_FAT | FM_FAT32, 4096, format_buff, FORMAT_BUFF_SIZE);
+      if(result != FR_OK) {
+        printf("format sd card error, error code %02x\r\n", result);
+        goto __jump1;
+      } else {
+        result = f_mount(&sd_card, _T("0:"), 1);
+        if(result != FR_OK) {
+          printf("remount sd card fail %d\r\n", result);
+          goto __jump1;
+        }
+      }
+    } else {
+      goto __jump1;
     }
   }
   printf("Mount SD_CARD succeed.\r\n");
@@ -384,28 +387,33 @@ int main(void)
   //fat_writetest();
   //fat_fileoperate();
   //fat_diroperate();
+  
+__jump1:
 	result = f_mount(&flash, _T("1:"), 1);  //¹ÒÔØFLASH
   if (result != FR_OK) {
     printf("Mount flash disk fail, %02x\r\n", result);
-  } 
-  if (result == FR_NO_FILESYSTEM) {
-    printf("no filesystem, formating flash disk ...\r\n");
-    result = f_mkfs(_T("1:"), FM_FAT, 4096, format_buff, FORMAT_BUFF_SIZE);
-    if (result != FR_OK) {
-      printf("format flash disk fail\r\n");
-      goto __jump;
-    }
-    result = f_mount(&flash, _T("1:"), 1);
-    if (result != FR_OK) {
-      printf("remount flash fail\r\n");
-      goto __jump;
+    if (result == FR_NO_FILESYSTEM) {
+      printf("no filesystem, formating flash disk ...\r\n");
+      result = f_mkfs(_T("1:"), FM_FAT, 4096, format_buff, FORMAT_BUFF_SIZE);
+      if (result != FR_OK) {
+        printf("format flash disk fail\r\n");
+        goto __jump2;
+      }
+      result = f_mount(&flash, _T("1:"), 1);
+      if (result != FR_OK) {
+        printf("remount flash fail %02x\r\n", result);
+        goto __jump2;
+      }
+    } else {
+      goto __jump2;
     }
   }
+  
   printf("Mount flash disk successfully\r\n");
 	fat_flashtest();
 	//fat_update_uni2gbk(_T("0:/unigbk.bin"));
 	
-  __jump:
+__jump2:
 	while(1)
 	{
     LED0(OFF);

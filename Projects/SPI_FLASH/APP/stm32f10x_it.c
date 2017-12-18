@@ -23,8 +23,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h"
-#include "SysTick.h"
-#include "stm32_eval_sdio_sd.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -136,7 +134,6 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-	SysTick_DelayServer();
 }
 
 /******************************************************************************/
@@ -154,16 +151,6 @@ void SysTick_Handler(void)
 /*void PPP_IRQHandler(void)
 {
 }*/
-
-/**
-  * @brief  This function handles SDIO interrupt request.
-  * @param  None
-  * @retval None
-  */
-void SDIO_IRQHandler(void)
-{
-  SD_ProcessIRQSrc();
-}
 
 /**
   * @}
