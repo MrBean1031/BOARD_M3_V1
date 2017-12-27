@@ -4,7 +4,7 @@
 #include "stm32f10x.h"
 #include <stdio.h>
 
-#define MEMORY_ALLOC_TASK_PRIO 3
+#define MEMORY_ALLOC_TASK_PRIO 1
 
 void *malloc_safe(size_t);
 void *calloc_safe(size_t, size_t);

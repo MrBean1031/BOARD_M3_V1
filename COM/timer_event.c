@@ -40,6 +40,9 @@ static struct timer_event_node *free_list_head, *using_list_head;
 static struct timer_event_node timer_event_array[TIMER_EVENT_ARRAY_SIZE];
 #elif NODE_MALLOC_METHOD == NODE_MALLOC_METHOD_HEAP
 #include "stdlib.h"
+#include "global.h"
+#define MALLOC(size)    malloc_safe(size)
+#define FREE(ptr)       free_safe(ptr)
 #else
 #error NODE_MALLOC_METHOD invalid
 #endif
@@ -140,7 +143,7 @@ int timer_event_add(void *arg, void (*func)(void *arg), u32 msec)
   p = free_list_head;
   free_list_head = p->next;
 #elif NODE_MALLOC_METHOD == NODE_MALLOC_METHOD_HEAP
-  p = (struct timer_event_node *)malloc(sizeof(struct timer_event_node));
+  p = (struct timer_event_node *)MALLOC(sizeof(struct timer_event_node));
   if(p == NULL) {
     os_protect_post(pt);
     return 0;
@@ -198,7 +201,7 @@ void timer_event_schedule(u32 ms_unit)
         p->next = free_list_head;
         free_list_head = p;
 #elif NODE_MALLOC_METHOD == NODE_MALLOC_METHOD_HEAP
-        free(p);
+        FREE(p);
 #endif
         p = using_list_head;
       } else {
@@ -207,7 +210,7 @@ void timer_event_schedule(u32 ms_unit)
         p->next = free_list_head;
         free_list_head = p;
 #elif NODE_MALLOC_METHOD == NODE_MALLOC_METHOD_HEAP
-        free(p);
+        FREE(p);
 #endif
         p = q->next;
       }
@@ -224,7 +227,7 @@ void timer_event_schedule(u32 ms_unit)
         p->next = free_list_head;
         free_list_head = p;
 #elif NODE_MALLOC_METHOD == NODE_MALLOC_METHOD_HEAP
-        free(p);
+        FREE(p);
 #endif
         p = using_list_head;
       } else {
@@ -233,7 +236,7 @@ void timer_event_schedule(u32 ms_unit)
         p->next = free_list_head;
         free_list_head = p;
 #elif NODE_MALLOC_METHOD == NODE_MALLOC_METHOD_HEAP
-        free(p);
+        FREE(p);
 #endif
         p = q->next;
       }

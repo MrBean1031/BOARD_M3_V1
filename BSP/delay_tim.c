@@ -3,7 +3,7 @@
  *Pin Mapping:      None
  *Author:           Mr.Bean
  *Date:             2017/2/16
- *Attention:        1.用到定时器6的Update中断，需要编写NVIC代码设置中断优先级并使能中断
+ *Attention:        1.用到定时器7的Update中断，需要编写NVIC代码设置中断优先级并使能中断
                     2.需要编写中断服务子程序（ISR）
 										3.TimeMeasure()，为了时间测量的精度，没有使用任务同步机制，注意不要重入
  */
@@ -24,11 +24,11 @@ uint8_t MeasureCnt;    //测量计数
  - Return:        None
  - Attention:     None
 -----------------------------------------------------*/
-void TIM6_TimeBase_Config(void)
+void TIM7_TimeBase_Config(void)
 {
 	TIM_TimeBaseInitTypeDef TimeBaseStruct;
 	
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6, ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM7, ENABLE);
 	// 定时器的时钟频率 fCKCNT=TIMxCLK/(1+TIM_Prescaler)
 	TimeBaseStruct.TIM_Prescaler = 0;
 	// TIM6，TIM7只支持向上计数模式
@@ -37,14 +37,14 @@ void TIM6_TimeBase_Config(void)
 	TimeBaseStruct.TIM_Period = 719;
 	// 输入滤波器分频系数，这里没有用到
 	TimeBaseStruct.TIM_ClockDivision = TIM_CKD_DIV1;
-	TIM_TimeBaseInit(TIM6,&TimeBaseStruct);
+	TIM_TimeBaseInit(TIM7,&TimeBaseStruct);
 	
 	// 使能预装载寄存器
-	TIM_ARRPreloadConfig(TIM6, ENABLE);
-	// 使能TIM6更新中断
-	TIM_ITConfig(TIM6, TIM_IT_Update, ENABLE);
-	// 使能TIM6
-	TIM_Cmd(TIM6, ENABLE);
+	TIM_ARRPreloadConfig(TIM7, ENABLE);
+	// 使能TIM7更新中断
+	TIM_ITConfig(TIM7, TIM_IT_Update, ENABLE);
+	// 使能TIM7
+	TIM_Cmd(TIM7, ENABLE);
 	MeasureState = MEASURE_STATE_STOP;
 	MeasureCnt = 0;
 	timerticks = 0;
@@ -106,25 +106,21 @@ void NVIC_Configuration(void)
 	NVIC_InitTypeDef NVIC_InitStruct;
 	
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_3);
-	NVIC_InitStruct.NVIC_IRQChannel = TIM6_IRQn;
+	NVIC_InitStruct.NVIC_IRQChannel = TIM7_IRQn;
 	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 1;
 	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStruct);
 }
 
-void TIM6_IRQHandler(void)
+void TIM7_IRQHandler(void)
 {
-	extern uint32_t timerticks;
-	extern uint8_t MeasureState;
-	extern uint8_t MeasureCnt;
-	
 #ifdef OS_uCOS_II_H
 	OSSchedLock();  // 锁调度器,防止OSIntExit()切线程造成HardFault
 #endif
-	if(TIM_GetITStatus(TIM6, TIM_IT_Update)==SET)
+	if(TIM_GetITStatus(TIM7, TIM_IT_Update)==SET)
 	{
-		TIM_ClearITPendingBit(TIM6,TIM_IT_Update);
+		TIM_ClearITPendingBit(TIM7,TIM_IT_Update);
 		if(timerticks>0)
 			timerticks--;
 		if(MeasureState == MEASURE_STATE_WORKING)

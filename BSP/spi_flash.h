@@ -5,15 +5,15 @@
 
 #define RCC_SPI_FlashClkCmd(sta) \
   do { \
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, sta); \
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, sta); \
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, sta); \
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, sta); \
   } while(0)
-#define FLASH_GPIOPort       GPIOA
-#define FLASH_GPIOPin_CS     GPIO_Pin_8
-#define FLASH_GPIOPin_SCK    GPIO_Pin_5
-#define FLASH_GPIOPin_MISO   GPIO_Pin_6
-#define FLASH_GPIOPin_MOSI   GPIO_Pin_7
-#define FLASH_SPIx           SPI1
+#define FLASH_GPIOPort       GPIOB
+#define FLASH_GPIOPin_CS     GPIO_Pin_11
+#define FLASH_GPIOPin_SCK    GPIO_Pin_13
+#define FLASH_GPIOPin_MISO   GPIO_Pin_14
+#define FLASH_GPIOPin_MOSI   GPIO_Pin_15
+#define FLASH_SPIx           SPI2
 #define FLASH_NSS_HIGH       (FLASH_GPIOPort->ODR |=  FLASH_GPIOPin_CS)
 #define FLASH_NSS_LOW        (FLASH_GPIOPort->ODR &= ~FLASH_GPIOPin_CS)
 

@@ -51,10 +51,7 @@ void free_safe(void *p)
   u8 err;
 #ifdef OS_uCOS_II_H
   if(!memory_alloc) {
-    memory_alloc = OSMutexCreate(MEMORY_ALLOC_TASK_PRIO, &err);
-    if (!memory_alloc || err != OS_ERR_NONE) {
-      return;
-    }
+    return;
   }
   OSMutexPend(memory_alloc, 0, &err);
 #endif

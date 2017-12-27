@@ -23,8 +23,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h"
-#include "SysTick.h"
+#include "SysTick_OS.h"
 #include "timer_event.h"
+#include "delay_tim.h"
+#include "includes.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -136,7 +138,10 @@ void DebugMon_Handler(void)
   */
 void SysTick_Handler(void)
 {
-	SysTick_DelayServer();
+  OSIntEnter();
+  OSTimeTick();
+  timer_event_schedule(1000 / OS_TICKS_PER_SEC);
+  OSIntExit();
 }
 
 /******************************************************************************/
@@ -162,11 +167,31 @@ void SysTick_Handler(void)
   */
 void TIM6_IRQHandler(void)
 {
+  OSIntEnter();
   if(TIM_GetITStatus(TIM6, TIM_IT_Update) == SET) 
   {
     TIM_ClearITPendingBit(TIM6, TIM_IT_Update);
     timer_event_schedule(5);  //定时单元为5ms
   }
+  OSIntExit();
+}
+
+void TIM7_IRQHandler(void)
+{
+#ifdef OS_uCOS_II_H
+	OSSchedLock();  // 锁调度器,防止OSIntExit()切线程造成HardFault
+#endif
+	if(TIM_GetITStatus(TIM7, TIM_IT_Update)==SET)
+	{
+		TIM_ClearITPendingBit(TIM7,TIM_IT_Update);
+		if(timerticks>0)
+			timerticks--;
+		if(MeasureState == MEASURE_STATE_WORKING)
+			MeasureCnt++;
+	}
+#ifdef OS_uCOS_II_H
+	OSSchedUnlock();  //解锁调度器
+#endif
 }
 
 /**

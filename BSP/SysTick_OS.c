@@ -14,7 +14,8 @@ void SysTick_Init(void)
 #else
 	/* set Priority for Cortex-M0 System Interrupts */
 	//prio = 0x0000_FFFF,STM32 use high nibbles as prio,that means the highest prio.
-	NVIC_SetPriority (SysTick_IRQn, (1<<__NVIC_PRIO_BITS) - 1);
+//	NVIC_SetPriority (SysTick_IRQn, (1<<__NVIC_PRIO_BITS) - 1);  // Lowest Priority
+  NVIC_SetPriority(SysTick_IRQn, 0); // Higest Priority
 	while(SystemCoreClock/OS_TICKS_PER_SEC > SysTick_LOAD_RELOAD_Msk);
 	SysTick->LOAD = SystemCoreClock/OS_TICKS_PER_SEC - 1;
 	SysTick->VAL = 0;
