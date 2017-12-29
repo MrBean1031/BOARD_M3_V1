@@ -116,7 +116,7 @@ void NVIC_Configuration(void)
 void TIM7_IRQHandler(void)
 {
 #ifdef OS_uCOS_II_H
-	OSSchedLock();  // 锁调度器,防止OSIntExit()切线程造成HardFault
+	OSIntEnter();
 #endif
 	if(TIM_GetITStatus(TIM7, TIM_IT_Update)==SET)
 	{
@@ -127,7 +127,7 @@ void TIM7_IRQHandler(void)
 			MeasureCnt++;
 	}
 #ifdef OS_uCOS_II_H
-	OSSchedUnlock();  //解锁调度器
+	OSIntExit();
 #endif
 }
 

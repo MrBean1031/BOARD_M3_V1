@@ -146,7 +146,7 @@ int sw_dev_close(const char *name)
   for (dev = sw_list_head; dev != 0; dev = dev->next) {
     if (!strcmp(dev->name, name)) {
       gpio_init.GPIO_Pin = dev->gpio_pin;
-      gpio_init.GPIO_Mode = GPIO_Mode_IPU;
+      gpio_init.GPIO_Mode = GPIO_Mode_IN_FLOATING;
       GPIO_Init(dev->gpio_port, &gpio_init);
       if (dev == sw_list_head) {
         sw_list_head = dev->next;
