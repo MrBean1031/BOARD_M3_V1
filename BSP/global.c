@@ -1,6 +1,6 @@
 #include "global.h"
 #include "stdlib.h"
-#include "includes.h"
+//#include "includes.h"
 
 #ifdef OS_uCOS_II_H
 OS_EVENT *memory_alloc = 0;
@@ -8,9 +8,9 @@ OS_EVENT *memory_alloc = 0;
 
 void *malloc_safe(size_t size)
 {
-  u8 err;
   void *p;
 #ifdef OS_uCOS_II_H
+  u8 err;
   if(!memory_alloc) {
     memory_alloc = OSMutexCreate(MEMORY_ALLOC_TASK_PRIO, &err);
     if (!memory_alloc || err != OS_ERR_NONE) {
@@ -28,9 +28,9 @@ void *malloc_safe(size_t size)
 
 void *calloc_safe(size_t number, size_t size)
 {
-  u8 err;
   void *p;
 #ifdef OS_uCOS_II_H
+  u8 err;
   if(!memory_alloc) {
     memory_alloc = OSMutexCreate(MEMORY_ALLOC_TASK_PRIO, &err);
     if (!memory_alloc || err != OS_ERR_NONE) {
@@ -48,8 +48,8 @@ void *calloc_safe(size_t number, size_t size)
 
 void free_safe(void *p)
 {
-  u8 err;
 #ifdef OS_uCOS_II_H
+  u8 err;
   if(!memory_alloc) {
     return;
   }
@@ -61,3 +61,10 @@ void free_safe(void *p)
 #endif
   return;
 }
+
+
+FATFS fs_sd = {0};
+FATFS fs_flash = {0};
+
+
+

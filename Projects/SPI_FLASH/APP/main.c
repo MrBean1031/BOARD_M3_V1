@@ -3,6 +3,8 @@
 #include "spi_flash.h"
 #include "stdio.h"
 #include "string.h"
+#include "led.h"
+#include "SysTick.h"
 
 #define Address 0
 
@@ -18,6 +20,7 @@ int main(void)
    "martial arts."};
 	uint8_t Flash_RxData[256]={0};
 	
+  SysTick_Init();
 	SPI_Flash_Config();
 	USART_Config();
 	

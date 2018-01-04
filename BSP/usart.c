@@ -1,5 +1,6 @@
 /*USART1 TXD -> PA9, USART1 RXD -> PA10*/
 #include "usart.h"
+#include "lcd9341_fsmc.h"
 
 void USART_Config()
 {
@@ -33,7 +34,12 @@ void USART_Config()
 
 int fputc(int c, FILE * stream)
 {
+#if 1
 	USART_SendData(USART1,(unsigned int)c);
 	while(USART_GetFlagStatus(USART1,USART_FLAG_TC) != SET);
+#else
+  LCD_PutChar((u8)c, 16, 1);
+#endif
 	return c;
 }
+

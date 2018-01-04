@@ -18,7 +18,8 @@
 #include "delay_tim.h"
 #include "usart.h"
 #include "font.h"
-#include "stdlib.h"
+#include <stdlib.h>
+#include <string.h>
 #include "global.h"
 
 #define MALLOC(size)   malloc(size)
@@ -26,14 +27,13 @@
 
 #ifdef __USE_CHN
 #include "ff.h"
-FATFS fsff;
 FIL fileff;
 FILINFO fiff;
 FRESULT resff;
 #endif
 
 LCD_GlobalTypeDef lcd_param;
-u16 FontColor=WHITE,BackColor=BLUE;  //字体颜色，字体背景颜色
+u16 FontColor=WHITE,BackColor=BLACK;  //字体颜色，字体背景颜色
 
 
 /*-----------------------------------------------------
@@ -106,7 +106,7 @@ u16 LCD_GetPoint(u16 x, u16 y)
 	LCD_RD_DATA();  //dummy read
 	val = LCD_RD_DATA();  //read GRAM
 	r = val>>11;
-	g = val>>2 & 0X003F;
+	g = (val & 0x00FC) >> 2;
 	val = LCD_RD_DATA();  //read GRAM
 	b = val>>11;
 	val = r<<11 | g<<5 | b;
@@ -115,23 +115,40 @@ u16 LCD_GetPoint(u16 x, u16 y)
 
 void LCD_ReadBuffer(u16 x, u16 y, u16 width, u16 height, u8 *buff)
 {
-	u16 val,r,g,b;
+	u16 val;
+  u8 r,g,b,r2,tick;
   u32 i;
 	val = LCD_SetWindow(x, y, width, height);
-  if (val) {
+  if (val)
+  {
     return;
   }
+  tick = 0;
 	LCD_WR_REG(0X2E);  //Memory Read
 	LCD_RD_DATA();  //dummy read
-  for (i=0; i<width*height; i++)
+  for (i = 0; i < width * height; i++)
   {
-	  val = LCD_RD_DATA();  //read GRAM
-	  r = val>>11;
-	  g = val>>2 & 0X003F;
-	  val = LCD_RD_DATA();  //read GRAM
-	  b = val>>11;
-	  val = r<<11 | g<<5 | b;
-    *(u16 *)(buff + 2*i) = val;
+    if(tick == 0)
+    {
+      val = LCD_RD_DATA();  //read GRAM
+      r = val>>11;
+      g = (val & 0x00FC) >> 2;
+      val = LCD_RD_DATA();  //read GRAM
+      b = val>>11;
+      r2 = (val & 0x00F8) >> 3;
+      val = r<<11 | g<<5 | b;
+      *(u16 *)(buff + 2*i) = val;
+      tick = 1;
+    }
+    else
+    {
+      val = LCD_RD_DATA();
+      g = (val & 0xFC00) >> 10;
+      b = (val & 0x00F8) >> 3;
+      val = r2<<11 | g<<5 | b;
+      *(u16 *)(buff + 2*i) = val;
+      tick = 0;
+    }
   }
 }
 
@@ -140,7 +157,7 @@ void LCD_FillColor(u16 x, u16 y, u16 width, u16 height, u16 color)
 	u32 i;
 	LCD_SetWindow(x, y, width, height);
 	LCD_WR_REG(0X2C);
-	for(i=0; i<width*height; i++)
+	for(i = 0; i < width * height; i++)
 	{
 		LCD_WR_DATA(color);
 	}
@@ -151,7 +168,7 @@ void LCD_FillBuffer(u16 x, u16 y, u16 width, u16 height, u8 *buff)
 	u32 i;
 	LCD_SetWindow(x, y, width, height);
 	LCD_WR_REG(0X2C);
-	for(i=0; i<width*height; i++)
+	for(i = 0; i < width * height; i++)
 	{
 		LCD_WR_DATA(*(u16 *)(buff + 2*i));
 	}
@@ -219,10 +236,10 @@ void ILI9341_Initial(void)
 	LCD_WR_REG(0XD3);  //读ID4
 	LCD_RD_DATA();  //xx
 	LCD_RD_DATA();  //0X00
-	lcd_param.LCD_ID = LCD_RD_DATA()&0xFF;  //0X93
-	lcd_param.LCD_ID = (lcd_param.LCD_ID<<8) + (LCD_RD_DATA()&0xFF);  //0X41
-	printf("LCD ID %04X\r\n", lcd_param.LCD_ID);
-	if(lcd_param.LCD_ID == 0X9341)
+	lcd_param.id = LCD_RD_DATA()&0xFF;  //0X93
+	lcd_param.id = (lcd_param.id<<8) + (LCD_RD_DATA()&0xFF);  //0X41
+	printf("LCD ID %04X\r\n", lcd_param.id);
+	if(lcd_param.id == 0X9341)
 	{
 		lcd_param.screendir = L2R_U2D;
 		lcd_param.width = 240;
@@ -313,9 +330,12 @@ void ILI9341_Initial(void)
 		LCD_ILI9341_CMD(0X29);  //DISPLAY ON
 	
 		LCD_BL_ON;
-		LCD_FillColor(0,0,240,320, BLACK);
+		LCD_FillColor(0,0,240,320, BackColor);
 #ifdef __USE_CHN
-		f_mount(&fsff, _T("0:"),1);  //挂载文件系统
+    if(fs_sd.fs_type == 0)
+    {
+		  f_mount(&fs_sd, _T("0:"), 1);  //挂载文件系统
+    }
 #endif
 	}
 }
@@ -441,36 +461,42 @@ void LCD_ShowChar(u16 x, u16 y, char ch, u8 size, u16 mode)
 	u8 *cache, *buff;
 	u16 csize, x0 = x, y0 = y, color = FontColor;
 	csize = (size/8 + !!(size%8)) * (size/2);  //字模所占字节数
+
   buff = (u8 *)MALLOC(size * size / 2 * 2);
-  if (buff == 0) {
+  if(buff == 0)
     return;
-  }
-  if(mode) {
+  if(ch - ' ' >= sizeof(ascii16) / sizeof(ascii16[0]) || ch - ' ' < 0)
+    return;
+  if(mode)
     LCD_ReadBuffer(x0, y0, size / 2, size, buff);
-  } else {
-    memset(buff, BackColor ,size * size / 2 * 2);
+  else
+  {
+    for(i=0; i<size*size/2; i++)
+    {
+      *(u16 *)(buff + 2*i) = BackColor;
+    }
   }
   switch(size) 
   {
     case 12:
-      cache = ascii12[ch - ' '];
+      cache = (u8 *)ascii12[ch - ' '];
       break;
     case 16:
-      cache = ascii16[ch - ' '];
+      cache = (u8 *)ascii16[ch - ' '];
       break;
     case 24:
-      cache = ascii24[ch - ' '];
+      cache = (u8 *)ascii24[ch - ' '];
       break;
   }
-	for(i=0; i<csize; i++)
+	for(i = 0; i < csize; i++)
 	{
-    for(j=0; j<8; j++)
+    for(j = 0; j < 8; j++)
     {
-      if(cache[i] & 0x80>>j) {
+      if(cache[i] & 0x80>>j) 
         memcpy(buff + (y-y0)*size + (x-x0)*2, &color, 2); 
-      }
       y++;
-      if(y - y0 >= size) {
+      if(y - y0 >= size)
+      {
        y = y0;
        x++;
        break;
@@ -489,138 +515,247 @@ void LCD_ShowChn(u16 x, u16 y, const char* ch, u8 size, u8 mode)
   u16 color = FontColor;
 	u8 gbh=0, gbl=0;  //汉字内码高字节，内码低字节
   u8 *buff, *matrix;
-  buff = (u8 *)MALLOC(size * size * 2);
-  if (buff == 0) {
-    return;
-  }
+
 	csize = (size/8 + !!(size%8)) * size;
   matrix = (u8 *)MALLOC(csize);
-  if (matrix == 0) {
-    FREE(buff);
+  if(matrix == 0)
+  {
     return;
   }
-	gbh = ch[0], gbl = ch[1];
-	if (gbl < 0x7F) {
+  buff = (u8 *)MALLOC(size * size * 2);
+  if(buff == 0)
+  {
+    FREE(matrix);
+    return;
+  }
+	gbh = ch[0], gbl = ch[1];  //字节序为大端模式
+	if(gbl < 0x7F)
 		offset = ((gbh-0x81)*190 + gbl-0x40) * csize;
-  }	else if(gbl >= 0x80) {
+  else if(gbl >= 0x80)
 		offset = ((gbh-0x81)*190 + gbl-0x41) * csize;
-  }
-  if (mode) {
+  if (mode)
     LCD_ReadBuffer(x0, y0, size, size, buff);
-  } else {
-    memset(buff, BackColor, size * size * 2);
+  else
+  {
+    for(i=0; i<size*size; i++)
+    {
+      *(u16 *)(buff + 2*i) = BackColor;
+    }
   }
-	if (size == 16) {
+	if(size == 16)
 		resff = f_open(&fileff, _T("0:/GBK16.DZK"), FA_READ | FA_OPEN_EXISTING);
-  } else if (size == 12) {
+  else if(size == 12)
 		resff = f_open(&fileff, _T("0:/GBK12.DZK"), FA_READ | FA_OPEN_EXISTING);
-  } else if (size == 24) {
-		resff = f_open(&fileff, _T("0:/GBK24.DZK"), FA_READ | FA_OPEN_EXISTING);
-  }
+  else if(size == 24)
+		resff = f_open(&fileff, _T("0:/GBK24.DZK"), FA_READ | FA_OPEN_EXISTING); 
 	if(resff == FR_OK)
 	{
 		f_lseek(&fileff, offset);  //移动到对应偏移量
 		f_read(&fileff, matrix, csize, (UINT*)&br);
-		if (br < csize) {
+		if(br < csize)
+    {
       f_close(&fileff);
       FREE(matrix);
       FREE(buff);
       return;  //错误返回
     }
-		for(i=0; i<csize; i++)
+		for(i = 0; i < csize; i++)
 		{
-			/*for(j=0;j<8;j++)*/
-			/*{*/
-				/*if(matrix[i] & 0X80>>j)*/
-					/*LCD_DrawPoint(x,y,FontColor);*/
-				/*else if(!mode)*/
-					/*LCD_DrawPoint(x,y,BackColor);*/
-				/*x++;*/
-				/*if(x-x0>=size)*/
-				/*{*/
-					/*x=x0;*/
-					/*y++;*/
-					/*break;*/
-				/*}*/
-			/*}*/
-      for(j=0; j<8; j++)
+      for(j = 0; j < 8; j++)
       {
-        if (matrix[i] & 0x80>>j) {
+        if(matrix[i] & 0x80>>j)
           memcpy(buff + (y-y0)*size*2 + (x-x0)*2, &color, 2);
+        x++;
+        if(x - x0 >= size)
+        {
+          x = x0;
+          y++;
+          break;
         }
       }
 		}
 		f_close(&fileff);
+    LCD_FillBuffer(x0, y0, size, size, buff);
 	}
+  FREE(matrix);
+  FREE(buff);
 }
 #endif
 
 /*-----------------------------------------------------
  - Function Name: LCD_ShowStr
- - Description:   字符串显示，支持中英文混合的字符串输入
-                  支持自动换行，超下边界结束输出
- - Input:         x,y - 坐标
-                  str - 字符串输入，支持中英混合
+ - Description:   控件模式字符串显示，支持中英文混合的字
+                  符串输入支持，支持列宽限制，当每行字符
+                  数大于列宽限制时自动换行，结束行补全空
+                  余列
+ - Input:         x,y  - 坐标
+                  str  - 字符串输入，支持中英混合
                   size - 字体大小
                   mode - 1 叠加，0 非叠加
+                  cols - 列宽限制
  - Output:        None
- - Return:        None
+ - Return:        返回输出行数
  - Attention:     使用中文字符要定义__USE_CHN宏
-                  注意LCD_ScreenDir()设定的屏幕方向，有
-                  四个方向会导致文本镜像显示
+                  注意LCD_ScreenDir()设定的屏幕方向，其
+                  中四个方向会导致文本镜像显示
 -----------------------------------------------------*/
-void LCD_ShowStr(u16 x,u16 y,const char* str,u8 size,u8 mode)
+int LCD_ShowStr(u16 x, u16 y, const char *str, u8 size, u8 mode, u16 cols)
 {
-	u16 x0=x;
+	u16 x0 = x;
+  u16 xend;
+  int lines;
+
+  if (str == 0)
+    return 0;
+  lines = 1;
+  xend = x0 + cols * size / 2;
 	while(*str != '\0')
 	{
-		if(x>=lcd_param.width || y>=lcd_param.height) break;
 		if(*str & 0x80)  //中文文本
 		{
 #ifdef __USE_CHN
-			LCD_ShowChn(x,y,str,size,mode);
-			x = x+size;
-			if(x+size>=lcd_param.width)
+      if(x + size > xend)
+      {
+        LCD_ShowChar(x, y, ' ', size, mode);
+        x = x0;
+        y += size;
+        lines++;
+      }
+			LCD_ShowChn(x, y, str, size, mode);
+			x = x + size;
+			if(x + size / 2 > xend && str[2])
 			{
-				x=x0;
-				y=y+size;
+				x = x0;
+				y = y + size;
+        lines++;
 			}
-			if(y+size>=lcd_param.height) break;  //超出范围，停止显示
 #endif
-			str = str+2;
-		}else  //英文文本
+			str = str + 2;
+		}
+    else  //英文文本
 		{
-			LCD_ShowChar(x,y,*str,size,mode);
-			x=x+size/2;
-			if(x+size/2 >= lcd_param.width)
+			LCD_ShowChar(x, y, *str, size, mode);
+			x = x + size / 2;
+			if(x + size / 2 > xend && str[1])
 			{
-				x=x0;
-				y=y+size;
+				x = x0;
+				y = y + size;
+        lines++;
 			}
-			if(y+size >= lcd_param.height) break;  //超出范围，停止显示
 			str++;
 		}
 	}
+  if(y + size >= lcd_param.height)
+  {
+    return lines;
+  }
+  while(mode == 0 && x < xend)
+  {
+    LCD_ShowChar(x, y, ' ', size, mode);
+    x += size / 2;
+  }
+  return lines;
+}
+
+/*-----------------------------------------------------
+ - Function Name: LCD_PutChar
+ - Description:   向屏幕输出一个字符，如果字符是DBCS，则
+                  需要调用两次这个函数
+ - Input:         c     - 字符输入，支持中英混合
+                  size  - 字体大小
+                  cls   - 清屏选项，1 到达屏末清屏，2 强
+                  制清屏
+ - Output:        None
+ - Return:        None
+ - Attention:     使用中文字符要定义__USE_CHN宏
+                  注意LCD_ScreenDir()设定的屏幕方向，其
+                  中四个方向会导致文本镜像显示
+-----------------------------------------------------*/
+void LCD_PutChar(u8 c, u8 size, u8 cls)
+{
+  static u16 line = 0, col = 0;
+  static u8 status = 0;
+  static u8 oem[2];
+
+  if (cls == 2) {
+    line = 0;
+    col = 0;
+    return;
+  }
+  switch(status)
+  {
+    case 0:
+      if (c == '\r') {
+        status = 1;
+      } else if (c == '\n') {
+        col = 0;
+        line += 1;
+      } else {
+        if (c < 0x80) {  //英文文本
+		    	LCD_ShowChar(col * 8, line * 16, c, 16, 0);
+		    	col += 1;
+		    } else {
+          oem[0] = c;
+          status = 2;
+        }
+      }
+      break;
+    case 1:
+      if (c == '\n') {
+        col = 0;
+        line += 1;
+        status = 0;
+      } else if (c < 0x80) {
+		    LCD_ShowChar(col * 8, line * 16, c, 16, 0);
+		    col += 1;
+        status = 0;
+      } else {
+        oem[0] = c; 
+        status = 2;
+      }
+      break;
+    case 2:
+      oem[1] = c;
+#ifdef __USE_CHN
+      LCD_ShowChn(col * 8, line * 16, (const char *)oem, 16, 0);
+      col += 2;
+#endif
+      status = 0;
+      break;
+    default:
+      status = 0;
+  }
+ 	if (col * 8 + 8 >= lcd_param.width) {
+ 		col = 0;
+ 		line += 1;
+ 	}
+  if (line * 16 + 16 >= lcd_param.height) {
+    line = 0;
+    col = 0;
+    if (cls == 1) {
+      LCD_FillColor(0, 0, lcd_param.width, lcd_param.height, BackColor);
+    }
+  }
 }
 
 /*将整数转换成字符串，value为输入的整形变量，s保存转换结果，radix = 10表示十进制，其他输出NULL*/
-static char* inter2string(int value, char *s, int radix)
+char *inter2string(int value, char *s, int radix)
 {
-	char* tmp=s;
-	int count=0,digit[12]={0};
+	char* tmp = s;
+	int count = 0,digit[12] = {0};
 	if(radix == 10)
 	{
 		if(value < 0)
 		{
-			value= -value;
+			value = -value;
 			*tmp++ = '-';
 		}
-		do{
-			digit[count]= value%10 + '0';
-			value= value/10;
+		do {
+			digit[count] = value % 10 + '0';
+			value = value/10;
 			count++;
-		}while(value != 0);
-		for(;count>0;count--)
+		} while(value != 0);
+		for(; count > 0; count--)
 		{
 			*tmp = (char)digit[count-1];
 			tmp++;
@@ -630,37 +765,37 @@ static char* inter2string(int value, char *s, int radix)
 	}
 	else
 	{
-		*s= '\0';
+		*s = '\0';
 		return NULL;
 	}
 } 
 
-void LCD_ShowNum(u16 x,u16 y,int num,u8 length,u8 size,u8 mode)
+void LCD_ShowNum(u16 x, u16 y, int num, u8 size, u8 mode, u8 length)
 {
 	//32bit整形变量十进制表示最大长度12（含正负号，字符串结束标志）
 	char num2str[12];
-	u8 strlen=0,i;
-	inter2string(num,num2str,10);
-	while(num2str[strlen]!='\0') strlen++;
-	if(strlen<length)
+	u8 strlen = 0, i;
+	inter2string(num, num2str, 10);
+	while(num2str[strlen] != '\0')
+    strlen++;
+	if(strlen <= length)
 	{
 		//填充空格使字符串右对齐
-		for(i=0;i<length-strlen;i++)
+		for(i = 0; i < length - strlen; i++)
 		{
-			LCD_ShowChar(x,y,0X20,size,mode);  
-			x+=size/2;
+			LCD_ShowChar(x, y, 0X20, size, mode);  
+			x += size / 2;
 		}
-		LCD_ShowStr(x,y,(const char*)num2str,size,mode);
+		LCD_ShowStr(x, y, (const char *)num2str, size, mode, strlen);
 	}
-	else if(strlen==length){
-		LCD_ShowStr(x,y,(const char*)num2str,size,mode);
-	}
-	else{
-		for(i=0;length>2 && i<length-2;i++)
+	else
+  {
+		for(i = 0; length > 2 && i < length - 2; i++)
 		{
-			LCD_ShowChar(x,y,0X20,size,mode);
-			x+=size/2;
+			LCD_ShowChar(x, y,  0X20, size, mode);
+			x += size / 2;
 		}
-		LCD_ShowStr(x,y,(const char*)"OF",size,mode);
+		LCD_ShowStr(x, y, "OF", size, mode, 2);
 	}
 }
+

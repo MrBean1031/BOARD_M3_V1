@@ -23,7 +23,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h"
-#include "SysTick.h"
+//#include "SysTick.h"
+#include "delay_tim.h"
+#include "stm32_eval_sdio_sd.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -135,8 +137,7 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-	if(SysTick_DelayFlag)
-		SysTick_DelayServer();
+//  SysTick_DelayServer();
 }
 
 /******************************************************************************/
@@ -159,5 +160,27 @@ void SysTick_Handler(void)
   * @}
   */ 
 
+void TIM7_IRQHandler(void)
+{
+#ifdef OS_uCOS_II_H
+	OSIntEnter();
+#endif
+	if(TIM_GetITStatus(TIM7, TIM_IT_Update)==SET)
+	{
+		TIM_ClearITPendingBit(TIM7,TIM_IT_Update);
+		if(timerticks>0)
+			timerticks--;
+		if(MeasureState == MEASURE_STATE_WORKING)
+			MeasureCnt++;
+	}
+#ifdef OS_uCOS_II_H
+	OSIntExit();
+#endif
+}
+
+void SDIO_IRQHandler(void)
+{
+  SD_ProcessIRQSrc();
+}
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

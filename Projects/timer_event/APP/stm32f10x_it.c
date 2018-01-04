@@ -138,8 +138,7 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-	if(SysTick_DelayFlag == 1)
-		SysTick_DelayServer();
+	SysTick_DelayServer();
 }
 
 /******************************************************************************/

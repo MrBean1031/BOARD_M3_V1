@@ -1,22 +1,13 @@
-#include "picture.h"
-#include "lcd9341.h"
+#include "show_bmp.h"
+#include "lcd9341_fsmc.h"
 #include "usart.h"
+#include "ff.h"
+#include "global.h"
 
-#ifndef __USE_CHN
-FATFS fsff;  //如果定义了__USE_CHN，则使用lcd9341.c定义的fsff，防止多次调用f_mount()
-#else
-extern FATFS fsff;  //如果定义了__USE_CHN，则fsff是来自lcd9341.c的外部变量
-#endif
 FIL filefp;
 FILINFO fifp;
 FRESULT resfp;
 
-void LCD_BmpPrepare(void)
-{
-#ifndef __USE_CHN
-	f_mount(&fsff,_T("0:"),1);
-#endif
-}
 
 /*-----------------------------------------------------
  - Function Name: LCD_ShowBmp
@@ -32,16 +23,20 @@ void LCD_BmpPrepare(void)
  - Attention:     调用本函数前必须注册drive工作区
                   注意BMP扫描方式是从左到右，从下到上
 -----------------------------------------------------*/
-u8 LCD_ShowBmp(u16 x, u16 y, TCHAR* path)
+u8 LCD_ShowBmp(u16 x, u16 y, const char* path)
 {
 	int i,j;
 	u8 red,green,blue,bmpbuf[960]={0};  //每行最大支持320像素*24位色
 	u16 l_width;
 	UINT br;
-	BITMAPFILEHEADER bmpfh;
-	BITMAPINFOHEADER bmpih;
+	BitmapFileHdr bmpfh;
+	BitmapInfoHdr bmpih;
 	BYTE  fileType[2];  //bmp文件必须为0X42,0X4D,即BM
 	
+  if(fs_sd.fs_type == 0)
+  {
+    f_mount(&fs_sd, _T("0:"),1);  //挂载SD卡文件系统
+  }
 	resfp = f_open(&filefp,path,FA_READ|FA_OPEN_EXISTING);
 	if(resfp==FR_OK)
 	{
@@ -54,39 +49,32 @@ u8 LCD_ShowBmp(u16 x, u16 y, TCHAR* path)
 		f_read(&filefp,&bmpfh,12,&br);
 		f_read(&filefp,&bmpih,40,&br);
 		//计算行字节数，必须是4的整数倍，不足末尾补0
-		if(bmpih.biBitCount==24)
-			l_width = bmpih.biWidth * (bmpih.biBitCount/8) + bmpih.biWidth%4;
+    if(bmpih.biBitCount!=24)
+    {
+			f_close(&filefp);
+			return 2;  //非24位色退出
+		}
+		l_width = bmpih.biWidth * (bmpih.biBitCount/8) + bmpih.biWidth%4;
 		if(l_width>960)
 		{
 			f_close(&filefp);
-			return 2;
+			return 3;
 		}
-		if(LCD_SetWindow(x, lcd_param.height-y-bmpih.biHeight, bmpih.biWidth, bmpih.biHeight))
-		{
-			f_close(&filefp);
-			return 3;  //超出屏幕范围退出
-		}
-		else
-		{
-			if(bmpih.biBitCount!=24) 
-			{
-				f_close(&filefp);
-				return 4;  //非24位色退出
-			}		
-			LCD_WR_REG(0x2C);  //Memroy Write;
-			for(i=0; i<bmpih.biHeight; i++)
-			{
-				f_read(&filefp, bmpbuf, l_width, &br);  //读出一行RGB数据
-				for(j=0; j<bmpih.biWidth; j++)  //填充列像素点
-				{
-					red   = bmpbuf[3*j+2];
-					green = bmpbuf[3*j+1];
-					blue  = bmpbuf[3*j+0];
-					LCD_WR_DATA(RGB24TORGB16(red,green,blue));
-				}
-			}
-			f_close(&filefp);
-		}
+    f_lseek(&filefp, bmpfh.bfOffset);
+    LCD_SetWindow(x, lcd_param.height-y-bmpih.biHeight, bmpih.biWidth, bmpih.biHeight);
+    LCD_WR_REG(0x2C);  //Memroy Write;
+    for(i=0; i<bmpih.biHeight; i++)
+    {
+      f_read(&filefp, bmpbuf, l_width, &br);  //读出一行RGB数据
+      for(j=0; j<bmpih.biWidth; j++)  //填充列像素点
+      {
+        red   = bmpbuf[3*j+2];
+        green = bmpbuf[3*j+1];
+        blue  = bmpbuf[3*j+0];
+        LCD_WR_DATA(RGB24TORGB16(red,green,blue));
+      }
+    }
+    f_close(&filefp);
 	}
 	return 0;
 }
@@ -100,19 +88,24 @@ u8 LCD_ShowBmp(u16 x, u16 y, TCHAR* path)
                   path - 文件路径
  - Output:        None
  - Return:        0 - succeed
-                  1 - fail
+                  1 - 图像范围超出显示区域
+                  2 - 文件访问失效
  - Attention:     注意截屏范围不能超出LCD坐标范围
                   截图前先设置LCD扫描方向
 -----------------------------------------------------*/
-u8 LCD_ScreenShot(u16 x,u16 y,u16 width,u16 height,TCHAR* path)
+u8 LCD_ScreenShot(u16 x,u16 y,u16 width,u16 height,const char* path)
 {
 	int i,j;
-	BITMAPFILEHEADER bmpfh;
-	BITMAPINFOHEADER bmpih;
+	BitmapFileHdr bmpfh;
+	BitmapInfoHdr bmpih;
 	BYTE  fileType[2];  //bmp文件必须为0X42,0X4D,即BM
 	u8 red,green,blue,linebuf[960];
 	u16 l_width,color,bw;
 	
+  if(fs_sd.fs_type == 0)
+  {
+    f_mount(&fs_sd, _T("0:"),1);  //挂载SD卡文件系统
+  }
 	//截图范围超区判定
 	if(x>=lcd_param.width || y>=lcd_param.height) return 1;
 	if(x+width-1>=lcd_param.width || y+height-1>=lcd_param.height) return 1;
@@ -138,23 +131,24 @@ u8 LCD_ScreenShot(u16 x,u16 y,u16 width,u16 height,TCHAR* path)
 	bmpih.biClrImportant = 0;
 	
 	resfp = f_open(&filefp, path, FA_WRITE|FA_CREATE_ALWAYS);
-	if(resfp!=FR_OK) return 1;  //打开文件失败
+	if(resfp!=FR_OK) return 2;  //打开文件失败
 	f_write(&filefp,fileType,2,(UINT*)&bw);
 	f_write(&filefp,&bmpfh,12,(UINT*)&bw);  //写入位图文件头
 	f_write(&filefp,&bmpih,40,(UINT*)&bw);  //写入位图信息头
 	for(i=0;i<height;i++) //对一整行操作
 	{
-		for(j=0;j<width;j++)
+		LCD_ReadBuffer(x,lcd_param.height-y-height+i,width,1,linebuf);
+		for(j=width;j>0;j--)
 		{
-			color = LCD_ReadPoint(x+j,lcd_param.height-y-height+i);
+      color = *(u16 *)&linebuf[(j-1)*2];
 			red = color>>11<<3;        //8bit R
 			green = (color&0X07E0)>>3; //8bit G
 			blue = (color&0X1F)<<3;    //8bit B
-			linebuf[3*j+0] = blue;
-			linebuf[3*j+1] = green;
-			linebuf[3*j+2] = red;
+			linebuf[3*(j-1)+0] = blue;
+			linebuf[3*(j-1)+1] = green;
+			linebuf[3*(j-1)+2] = red;
 		}
-		for(j=3*width; j<l_width; j++)  //字节数不足4的整数倍末尾补0
+		for(j=3*bmpih.biWidth; j<l_width; j++)  //字节数不足4的整数倍末尾补0
 			linebuf[j] = 0;
 		f_write(&filefp,linebuf,l_width,(UINT*)&bw);
 	}

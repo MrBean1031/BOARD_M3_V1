@@ -2,7 +2,7 @@
 
 //#define USER_SYSTICK_INIT
 
-__IO uint32_t nTime;
+static uint32_t nTime;
 
 void SysTick_Init(void)
 {

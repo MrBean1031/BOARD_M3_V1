@@ -6,7 +6,6 @@
 #include "../ff.h"
 #include "spi_flash.h"
 
-
 #if !_USE_LFN || _CODE_PAGE != 936
 #error This file is not needed in current configuration. Remove from the project.
 #endif
@@ -24,9 +23,9 @@ WCHAR ff_convert (	/* Converted code, 0 means conversion error */
 	WCHAR c;
 	int i, n, li, hi;
 	
-	static BYTE spi_init=0;
 	WCHAR p[2];
-	
+	static BYTE spi_init=0;
+
 	if(!spi_init)
 	{
 		spi_init=1;
@@ -56,7 +55,6 @@ WCHAR ff_convert (	/* Converted code, 0 means conversion error */
 		}
 		c = n ? p[1] : 0;
 	}
-
 	return c;
 }
 

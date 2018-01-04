@@ -361,7 +361,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_HD</Define>
               <Undefine></Undefine>
-              <IncludePath>.\USER;.\CMSIS;.\PERIPH\inc;.\PERIPH\src;.\FATFS\src;.\FATFS\src\option</IncludePath>
+              <IncludePath>.\APP;..\..\CMSIS;..\..\STM32F10x_StdPeriph\inc;..\..\FATFS\src;..\..\FATFS\src\option;..\..\BSP;..\..\COM;..\..\COM\fonts;..\..\COM\display</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -402,52 +402,17 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>USER</GroupName>
+          <GroupName>APP</GroupName>
           <Files>
             <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\USER\main.c</FilePath>
+              <FilePath>.\APP\main.c</FilePath>
             </File>
             <File>
               <FileName>stm32f10x_it.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\USER\stm32f10x_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>SysTick.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\USER\SysTick.c</FilePath>
-            </File>
-            <File>
-              <FileName>key.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\USER\key.c</FilePath>
-            </File>
-            <File>
-              <FileName>led.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\USER\led.c</FilePath>
-            </File>
-            <File>
-              <FileName>usart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\USER\usart.c</FilePath>
-            </File>
-            <File>
-              <FileName>lcd9341_fsmc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\USER\lcd9341_fsmc.c</FilePath>
-            </File>
-            <File>
-              <FileName>sd_spi.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\USER\sd_spi.c</FilePath>
-            </File>
-            <File>
-              <FileName>spi_flash.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\USER\spi_flash.c</FilePath>
+              <FilePath>.\APP\stm32f10x_it.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -455,64 +420,204 @@
           <GroupName>CMSIS</GroupName>
           <Files>
             <File>
-              <FileName>core_cm3.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\CMSIS\core_cm3.c</FilePath>
-            </File>
-            <File>
               <FileName>system_stm32f10x.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\CMSIS\system_stm32f10x.c</FilePath>
+              <FilePath>..\..\CMSIS\system_stm32f10x.c</FilePath>
+            </File>
+            <File>
+              <FileName>core_cm3.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\CMSIS\core_cm3.c</FilePath>
             </File>
             <File>
               <FileName>startup_stm32f10x_hd.s</FileName>
               <FileType>2</FileType>
-              <FilePath>.\CMSIS\startup_stm32f10x_hd.s</FilePath>
+              <FilePath>..\..\CMSIS\startup_stm32f10x_hd.s</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>PERIPH</GroupName>
+          <GroupName>STM32F10x_StdPeriph</GroupName>
           <Files>
             <File>
               <FileName>misc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\PERIPH\src\misc.c</FilePath>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\misc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_bkp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_bkp.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_can.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_can.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_cec.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_cec.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_crc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_crc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_dac.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_dac.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_dbgmcu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_dbgmcu.c</FilePath>
             </File>
             <File>
               <FileName>stm32f10x_dma.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\PERIPH\src\stm32f10x_dma.c</FilePath>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_dma.c</FilePath>
             </File>
             <File>
               <FileName>stm32f10x_exti.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\PERIPH\src\stm32f10x_exti.c</FilePath>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_exti.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_flash.c</FilePath>
             </File>
             <File>
               <FileName>stm32f10x_fsmc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\PERIPH\src\stm32f10x_fsmc.c</FilePath>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_fsmc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f10x_gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\PERIPH\src\stm32f10x_gpio.c</FilePath>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_i2c.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_iwdg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_iwdg.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_pwr.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_pwr.c</FilePath>
             </File>
             <File>
               <FileName>stm32f10x_rcc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\PERIPH\src\stm32f10x_rcc.c</FilePath>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_rcc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_rtc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_rtc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_sdio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_sdio.c</FilePath>
             </File>
             <File>
               <FileName>stm32f10x_spi.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\PERIPH\src\stm32f10x_spi.c</FilePath>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_tim.c</FilePath>
             </File>
             <File>
               <FileName>stm32f10x_usart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\PERIPH\src\stm32f10x_usart.c</FilePath>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_wwdg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\STM32F10x_StdPeriph\src\stm32f10x_wwdg.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>BSP</GroupName>
+          <Files>
+            <File>
+              <FileName>usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>delay_tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\delay_tim.c</FilePath>
+            </File>
+            <File>
+              <FileName>global.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\global.c</FilePath>
+            </File>
+            <File>
+              <FileName>key.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\key.c</FilePath>
+            </File>
+            <File>
+              <FileName>lcd9341_fsmc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\lcd9341_fsmc.c</FilePath>
+            </File>
+            <File>
+              <FileName>led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\led.c</FilePath>
+            </File>
+            <File>
+              <FileName>spi_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\spi_flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32_eval_sdio_sd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\stm32_eval_sdio_sd.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>COM</GroupName>
+          <Files>
+            <File>
+              <FileName>timer_event.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\COM\timer_event.c</FilePath>
+            </File>
+            <File>
+              <FileName>show_bmp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\COM\display\show_bmp.c</FilePath>
+            </File>
+            <File>
+              <FileName>font.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\COM\fonts\font.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -522,17 +627,17 @@
             <File>
               <FileName>diskio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\FATFS\src\diskio.c</FilePath>
+              <FilePath>..\..\FATFS\src\diskio.c</FilePath>
             </File>
             <File>
               <FileName>ff.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\FATFS\src\ff.c</FilePath>
+              <FilePath>..\..\FATFS\src\ff.c</FilePath>
             </File>
             <File>
               <FileName>unicode.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\FATFS\src\option\unicode.c</FilePath>
+              <FilePath>..\..\FATFS\src\option\unicode.c</FilePath>
             </File>
           </Files>
         </Group>
