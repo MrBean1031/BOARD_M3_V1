@@ -3,15 +3,16 @@
 
 #include "stm32f10x.h"
 
-typedef struct
+typedef __packed struct
 {
+    u8   filetype[2];  //bmp文件必须为0x42,0x4d,即BM
 	u32  bfSize;       //文件大小
 	u16  bfReserved1;  //保留字
 	u16  bfReserved2;
 	u32  bfOffset;     //实际位图起始地址，即位图文件头，位图信息头和颜色表长度之和
 } BitmapFileHdr;
 
-typedef struct
+typedef __packed struct
 {
 	u32  biSize;           //结构体的长度，为40
 	long biWidth;          //位图宽，以像素为单位
@@ -27,7 +28,8 @@ typedef struct
 } BitmapInfoHdr;
 
 //BMP24到BMP16图像数据压缩
-#define RGB24TORGB16(r,g,b) (((r)>>3)<<11 | ((g)>>2)<<5 | ((b)>>3))
+#define RGB24TORGB16(r,g,b) \
+  ((u16)((((u16)(r)&0xff)>>3)<<11 | (((u16)(g)&0xff)>>2)<<5 | (((u16)(b)&0xff)>>3)))
 
 //函数声明
 u8 LCD_ShowBmp(u16 x, u16 y, const char* path);

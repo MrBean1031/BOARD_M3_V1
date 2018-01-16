@@ -178,20 +178,7 @@ void TIM6_IRQHandler(void)
 
 void TIM7_IRQHandler(void)
 {
-#ifdef OS_uCOS_II_H
-	OSIntEnter();
-#endif
-	if(TIM_GetITStatus(TIM7, TIM_IT_Update)==SET)
-	{
-		TIM_ClearITPendingBit(TIM7,TIM_IT_Update);
-		if(timerticks>0)
-			timerticks--;
-		if(MeasureState == MEASURE_STATE_WORKING)
-			MeasureCnt++;
-	}
-#ifdef OS_uCOS_II_H
-	OSIntExit();
-#endif
+  TIM7_IRQServer();
 }
 
 /**

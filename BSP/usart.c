@@ -28,17 +28,16 @@ void USART_Config()
 	USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
 	USART_Init(USART1,&USART_InitStructure);
 	USART_Cmd(USART1,ENABLE);
-  USART_ClearFlag(USART1, USART_FLAG_TC);
 	//USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);  //Enable USART1 IT
 }
 
 int fputc(int c, FILE * stream)
 {
 #if 1
+  while(USART_GetFlagStatus(USART1,USART_FLAG_TC) != SET);
 	USART_SendData(USART1,(unsigned int)c);
-	while(USART_GetFlagStatus(USART1,USART_FLAG_TC) != SET);
 #else
-  LCD_PutChar((u8)c, 16, 1);
+  LCD_PutChar((u8)c, 12, 1);
 #endif
 	return c;
 }

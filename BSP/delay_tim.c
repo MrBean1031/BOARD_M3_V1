@@ -9,16 +9,18 @@
  */
  
 #include "delay_tim.h"
-//#include "includes.h"
+#include "includes.h"
 
+#define MEASURE_STATE_WORKING 0x01
+#define MEASURE_STATE_STOP    0x02
 
 uint32_t timerticks;
 uint8_t MeasureState;  //测量状态机
 uint8_t MeasureCnt;    //测量计数
 
 /*-----------------------------------------------------
- - Function Name: TIM6_TimeBase_Config()
- - Description:   使用定时器6完成时基为10us的延时服务，时间测量服务
+ - Function Name: TIM7_TimeBase_Config()
+ - Description:   使用定时器7完成时基为200us的延时服务，时间测量服务
  - Input:         None
  - Output:        None
  - Return:        None
@@ -33,8 +35,8 @@ void TIM7_TimeBase_Config(void)
 	TimeBaseStruct.TIM_Prescaler = 0;
 	// TIM6，TIM7只支持向上计数模式
 	TimeBaseStruct.TIM_CounterMode = TIM_CounterMode_Up;
-	// 溢出周期 T=TIM_Period+1，10us
-	TimeBaseStruct.TIM_Period = 719;
+	// 溢出周期 T=TIM_Period+1，100us
+	TimeBaseStruct.TIM_Period = 7199;
 	// 输入滤波器分频系数，这里没有用到
 	TimeBaseStruct.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseInit(TIM7,&TimeBaseStruct);
@@ -56,15 +58,18 @@ void TIM7_TimeBase_Config(void)
  - Input:         xus单位为1us
  - Output:        None
  - Return:        None
- - Attention:     延时时间以10us为粒度
+ - Attention:     延时时间粒度
 -----------------------------------------------------*/
 void Delay_us(uint32_t xus)
 {
 #ifdef OS_uCOS_II_H
 	OSSchedLock();  // 锁调度器,防止线程切换导致延时不准确
 #endif
-	timerticks = xus/10;
-	while(timerticks>0);
+  timerticks = xus / 100;
+  if (timerticks == 0) {
+    timerticks = 1;
+  }
+	while(timerticks > 0) {}
 #ifdef OS_uCOS_II_H
 	OSSchedUnlock();  //解锁调度器
 #endif
@@ -99,21 +104,7 @@ uint32_t TimeMeasure(void)
 	return time;
 }
 
-/* Example Codes
-
-void NVIC_Configuration(void)
-{
-	NVIC_InitTypeDef NVIC_InitStruct;
-	
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_3);
-	NVIC_InitStruct.NVIC_IRQChannel = TIM7_IRQn;
-	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 1;
-	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
-	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_Init(&NVIC_InitStruct);
-}
-
-void TIM7_IRQHandler(void)
+void TIM7_IRQServer(void)
 {
 #ifdef OS_uCOS_II_H
 	OSIntEnter();
@@ -129,6 +120,20 @@ void TIM7_IRQHandler(void)
 #ifdef OS_uCOS_II_H
 	OSIntExit();
 #endif
+}
+
+/* Example Codes
+
+void NVIC_Configuration(void)
+{
+	NVIC_InitTypeDef NVIC_InitStruct;
+	
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_3);
+	NVIC_InitStruct.NVIC_IRQChannel = TIM7_IRQn;
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStruct);
 }
 
 */

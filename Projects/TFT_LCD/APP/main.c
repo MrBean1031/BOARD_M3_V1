@@ -7,6 +7,7 @@
 #include "ff.h"
 #include "lcd9341_fsmc.h"
 #include "show_bmp.h"
+#include "global.h"
 
 void NVIC_Configuration(void)
 {
@@ -27,11 +28,11 @@ void NVIC_Configuration(void)
 }
 
 int main(void)
-{	
-	
+{
 	u16 color;
   u16 lines;
   u8 keyval;
+  FRESULT resfs;
 	
 	/*SysTick_Init();*/
   NVIC_Configuration();
@@ -40,12 +41,17 @@ int main(void)
 	Key_Config();
 	USART_Config();
 	ILI9341_Initial();
-  puts("hello\r\n");
+  
+  resfs = f_mount(&fs_sd, "0:", 1);
+  if(resfs != FR_OK)
+  {
+    printf("mount sd card fail %d\r\n", resfs);
+    while(1);
+  }
 	
-//  LCD_SetScreenDir(L2R_D2U);
-//  LCD_ShowBmp(0,0,"0:/ENC28J60.bmp");
-//  LCD_ShowBmp(10,10,"0:/ENC28J60_2.bmp");
-//  LCD_ShowBmp(20,20,"0:/dog_code.bmp");
+  LCD_SetScreenDir(L2R_D2U);
+  LCD_ShowBmp(0,0,"0:/ENC28J60.bmp");
+  LCD_ShowBmp(35,35,"0:/dog_code.bmp");
   
   BackColor = BLUE;
 	LCD_SetScreenDir(U2D_R2L);

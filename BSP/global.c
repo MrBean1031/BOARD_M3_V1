@@ -1,6 +1,6 @@
 #include "global.h"
 #include "stdlib.h"
-//#include "includes.h"
+#include "includes.h"
 
 #ifdef OS_uCOS_II_H
 OS_EVENT *memory_alloc = 0;

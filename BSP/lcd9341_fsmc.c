@@ -22,8 +22,8 @@
 #include <string.h>
 #include "global.h"
 
-#define MALLOC(size)   malloc(size)
-#define FREE(ptr)      free(ptr)
+#define MALLOC(size)   malloc_safe(size)
+#define FREE(ptr)      free_safe(ptr)
 
 #ifdef __USE_CHN
 #include "ff.h"
@@ -331,12 +331,6 @@ void ILI9341_Initial(void)
 	
 		LCD_BL_ON;
 		LCD_FillColor(0,0,240,320, BackColor);
-#ifdef __USE_CHN
-    if(fs_sd.fs_type == 0)
-    {
-		  f_mount(&fs_sd, _T("0:"), 1);  //挂载文件系统
-    }
-#endif
 	}
 }
 

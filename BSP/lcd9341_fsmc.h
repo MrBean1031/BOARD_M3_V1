@@ -22,7 +22,7 @@
 #define LCD_RD_DATA()      (*(__IO uint16_t*)Bank1_LCD_D)
 
 //中文字模支持
-#define __USE_CHN
+//#define __USE_CHN
 
 
 //无论MV取值如何，MY,MX决定了画图起点和终点

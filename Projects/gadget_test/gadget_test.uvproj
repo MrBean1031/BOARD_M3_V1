@@ -361,7 +361,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_HD</Define>
               <Undefine></Undefine>
-              <IncludePath>.\APP;..\..\CMSIS;..\..\STM32F10x_StdPeriph\inc;..\..\BSP;..\..\COM;..\..\UCOSII\CONFIG;..\..\UCOSII\CORE;..\..\UCOSII\PORT;..\..\FATFS\src</IncludePath>
+              <IncludePath>.\APP;..\..\CMSIS;..\..\STM32F10x_StdPeriph\inc;..\..\BSP;..\..\COM;..\..\rtos\UCOSII\CONFIG;..\..\rtos\UCOSII\CORE;..\..\rtos\UCOSII\PORT;..\..\filesystem\FATFS\src</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -617,12 +617,12 @@
             <File>
               <FileName>includes.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\..\UCOSII\CONFIG\includes.h</FilePath>
+              <FilePath>..\..\rtos\UCOSII\CONFIG\includes.h</FilePath>
             </File>
             <File>
               <FileName>os_cfg.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\..\UCOSII\CONFIG\os_cfg.h</FilePath>
+              <FilePath>..\..\rtos\UCOSII\CONFIG\os_cfg.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -632,52 +632,52 @@
             <File>
               <FileName>os_core.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_core.c</FilePath>
+              <FilePath>..\..\rtos\UCOSII\CORE\os_core.c</FilePath>
             </File>
             <File>
               <FileName>os_flag.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_flag.c</FilePath>
+              <FilePath>..\..\rtos\UCOSII\CORE\os_flag.c</FilePath>
             </File>
             <File>
               <FileName>os_mbox.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_mbox.c</FilePath>
+              <FilePath>..\..\rtos\UCOSII\CORE\os_mbox.c</FilePath>
             </File>
             <File>
               <FileName>os_mem.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_mem.c</FilePath>
+              <FilePath>..\..\rtos\UCOSII\CORE\os_mem.c</FilePath>
             </File>
             <File>
               <FileName>os_mutex.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_mutex.c</FilePath>
+              <FilePath>..\..\rtos\UCOSII\CORE\os_mutex.c</FilePath>
             </File>
             <File>
               <FileName>os_q.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_q.c</FilePath>
+              <FilePath>..\..\rtos\UCOSII\CORE\os_q.c</FilePath>
             </File>
             <File>
               <FileName>os_sem.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_sem.c</FilePath>
+              <FilePath>..\..\rtos\UCOSII\CORE\os_sem.c</FilePath>
             </File>
             <File>
               <FileName>os_task.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_task.c</FilePath>
+              <FilePath>..\..\rtos\UCOSII\CORE\os_task.c</FilePath>
             </File>
             <File>
               <FileName>os_time.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_time.c</FilePath>
+              <FilePath>..\..\rtos\UCOSII\CORE\os_time.c</FilePath>
             </File>
             <File>
               <FileName>os_tmr.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\CORE\os_tmr.c</FilePath>
+              <FilePath>..\..\rtos\UCOSII\CORE\os_tmr.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -685,19 +685,19 @@
           <GroupName>UCOSII-PORT</GroupName>
           <Files>
             <File>
+              <FileName>os_cpu_c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\rtos\UCOSII\PORT\os_cpu_c.c</FilePath>
+            </File>
+            <File>
               <FileName>os_cpu.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\..\UCOSII\PORT\os_cpu.h</FilePath>
+              <FilePath>..\..\rtos\UCOSII\PORT\os_cpu.h</FilePath>
             </File>
             <File>
               <FileName>os_cpu_a.asm</FileName>
               <FileType>2</FileType>
-              <FilePath>..\..\UCOSII\PORT\os_cpu_a.asm</FilePath>
-            </File>
-            <File>
-              <FileName>os_cpu_c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\UCOSII\PORT\os_cpu_c.c</FilePath>
+              <FilePath>..\..\rtos\UCOSII\PORT\os_cpu_a.asm</FilePath>
             </File>
           </Files>
         </Group>

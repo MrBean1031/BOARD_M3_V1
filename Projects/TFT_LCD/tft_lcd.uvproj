@@ -361,7 +361,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_HD</Define>
               <Undefine></Undefine>
-              <IncludePath>.\APP;..\..\CMSIS;..\..\STM32F10x_StdPeriph\inc;..\..\FATFS\src;..\..\FATFS\src\option;..\..\BSP;..\..\COM;..\..\COM\fonts;..\..\COM\display</IncludePath>
+              <IncludePath>.\APP;..\..\CMSIS;..\..\BSP;..\..\STM32F10x_StdPeriph\inc;..\..\filesystem\FATFS\src;..\..\filesystem\FATFS\src\option;..\..\COM;..\..\COM\fonts;..\..\COM\display</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -627,17 +627,17 @@
             <File>
               <FileName>diskio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\FATFS\src\diskio.c</FilePath>
+              <FilePath>..\..\filesystem\FATFS\src\diskio.c</FilePath>
             </File>
             <File>
               <FileName>ff.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\FATFS\src\ff.c</FilePath>
+              <FilePath>..\..\filesystem\FATFS\src\ff.c</FilePath>
             </File>
             <File>
               <FileName>unicode.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\FATFS\src\option\unicode.c</FilePath>
+              <FilePath>..\..\filesystem\FATFS\src\option\unicode.c</FilePath>
             </File>
           </Files>
         </Group>
