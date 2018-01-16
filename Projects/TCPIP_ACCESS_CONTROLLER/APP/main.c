@@ -62,11 +62,11 @@ void StartTask(void* arg)
   OS_EXIT_CRITICAL();
   
   timer_event_init();
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOE, ENABLE);
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOA, ENABLE);
   sw_dev_open("led0", GPIOB, GPIO_Pin_8, SW_RESET, SW_OFF);
   sw_dev_open("led1", GPIOB, GPIO_Pin_9, SW_RESET, SW_OFF);
   sw_dev_open("relay", GPIOB, GPIO_Pin_10, SW_SET, SW_ON);
-  sw_dev_open("beep", GPIOE, GPIO_Pin_6, SW_SET, SW_OFF);
+  sw_dev_open("beep", GPIOA, GPIO_Pin_8, SW_SET, SW_OFF);
   sw_dev_open("tp_cs", GPIOB, GPIO_Pin_12, SW_RESET, SW_OFF);  //necessary, 防止触屏SPI接口干扰RC522操作
   Key_Config();
 //  printf("FILE %s, LINE %d\r\n", __FILE__, __LINE__);

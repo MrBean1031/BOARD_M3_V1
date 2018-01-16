@@ -183,7 +183,7 @@ void access_gettime(void *arg)
       }
     }
 __exit0:
-    OSTimeDlyHMSM(0,0,20,0);  //延时20秒
+    OSTimeDlyHMSM(0,0,30,0);  //延时20秒
   }
 }
 
@@ -206,8 +206,8 @@ void access_disp(void *arg)
     LCD_ShowStr16(0, 11, (const char*)pTemp, 16);      
     
     //显示日期和时间
-    sprintf(dispbuf, "%04d/%02d/%02d  %02d:%02d", aSystem.date.year, aSystem.date.month,
-            aSystem.date.day, aSystem.time.hour, aSystem.time.minutes);
+    sprintf(dispbuf, "%04d/%02d/%02d  %02d:%02d:%02d", aSystem.date.year, aSystem.date.month,
+            aSystem.date.day, aSystem.time.hour, aSystem.time.minutes, aSystem.time.sec);
     LCD_ShowStr16(2, 0, dispbuf, 20);
   
     //显示连接状态
@@ -275,6 +275,7 @@ void access_disp(void *arg)
           if (aSystem.stage == AUTHENT) {
             if ((recvmsg = OSMboxAccept(mbox_access)) != NULL) {
               if (recvmsg->type == REGISTER) {
+                LCD_ClearStr16(10, 0, lcd_param.width / 8, 2);  //清除提示信息显示区域
                 if (recvmsg->value == ACCESS_BACK_AUTH_ERR) {
                   LCD_ShowStr16(10, 4, "No Administrator Card!", 22);
                   OSTimeDlyHMSM(0, 0, 2, 0);
@@ -319,6 +320,7 @@ void access_disp(void *arg)
           if (aSystem.stage == AUTHENT) {
             if ((recvmsg = OSMboxAccept(mbox_access)) != NULL) {
               if (recvmsg->type == REMOVE) {
+                LCD_ClearStr16(10, 0, lcd_param.width / 8, 2);  //清除提示信息显示区域
                 if (recvmsg->value == ACCESS_BACK_AUTH_ERR) {
                   LCD_ShowStr16(10, 4, "No Administrator Card!", 22);
                   OSTimeDlyHMSM(0,0,2,0);
@@ -341,7 +343,7 @@ void access_disp(void *arg)
                   sprintf(dispbuf, "ID %02X%02X%02X%02X Remove Successfully", recvmsg->pRecord->card_id[0], 
                           recvmsg->pRecord->card_id[1], recvmsg->pRecord->card_id[2],
                           recvmsg->pRecord->card_id[3]);
-                  LCD_ShowStr16(10, 12, dispbuf, 26);
+                  LCD_ShowStr16(10, 2, dispbuf, 26);
                   OSTimeDlyHMSM(0, 0, 2, 0);  //停留2s
                   LCD_ClearStr16(10, 0, lcd_param.width / 8, 2);
                 }
@@ -376,7 +378,7 @@ void access_disp(void *arg)
       LCD_ShowStr16(1, 0, "DISCONNECTED", 12);
       FontColor = color;
     }
-    OSTimeDlyHMSM(0, 0, 0, 500);  //延时
+    OSTimeDlyHMSM(0, 0, 0, 250);  //延时
   } //while 1
 }
 
@@ -390,16 +392,19 @@ static void sw_dev_callback(void *arg)
   u32 msec;
   const char *name;
   
-  id = id;
   name = (const char *)(*((u32 *)&data[7]));
   data[0] = (u8)((enum sw_state)data[0] == SW_ON ? SW_OFF : SW_ON);
   sw_dev_change(name, (enum sw_state)data[0]);
   if (*times != 0xff) {
     *times = *times - 1;
   }
-  if(isblink && *times) {  // if blink
+  if (isblink && *times) {  // if blink
     memcpy(&msec, data + 2, 4);
     id = timer_event_add(data, sw_dev_callback, msec);
+    if (id == 0) {
+      free_safe(data);
+      printf("%s() timer event add fail\r\n", __FUNCTION__);
+    }
     //timer_event_del(id);  //中断中删除测试
   } else {
     free_safe(data); 
@@ -411,9 +416,9 @@ static int sw_dev_blink(const char *name, u8 isblink, u32 msec, u8 times)
   int id, err;
   u8 *data;
   
-  id = id;
   data = (u8 *)malloc_safe(20);
   if (data == NULL) {
+    printf("%s() malloc fail\r\n", __FUNCTION__);
     return -10;
   }
   data[0] = (u8)SW_ON;
@@ -435,6 +440,9 @@ static int sw_dev_blink(const char *name, u8 isblink, u32 msec, u8 times)
     return err;
   }
   id = timer_event_add(data, sw_dev_callback, msec);
+  if (id == 0) {
+    printf("%s() timer event add fail\r\n", __FUNCTION__);
+  }
   //timer_event_del(id);  //中断外删除测试
   return 0;
 }
@@ -473,7 +481,7 @@ void access_handler(void *arg)
   aSystem.conn_status = DISCONNECTED;
   aSystem.cur_mode = ACCESS;
   aSystem.stage = AUTHENT;
-  IP4_ADDR(&serv_addr, 172, 16, 23, 22);  //指定服务器地址
+  IP4_ADDR(&serv_addr, 192, 168, 0, 107);  //指定服务器地址
   do {
     mbox_access = OSMboxCreate(NULL);  //创建任务间通信的邮箱
   } while(!mbox_access);
@@ -498,9 +506,10 @@ void access_handler(void *arg)
     if (err == ERR_OK) {
       aSystem.conn_status = CONNECTED;
       aSystem.pconn = conn;
+      OSTimeDlyResume(12);
       while (aSystem.conn_status == CONNECTED) {
         if (RFID_FindCard(&cInfo) == MI_OK) {
-          sw_dev_blink("beep", 1, 300, 2);
+          sw_dev_blink("beep", 1, 100, 2);
           
           switch (aSystem.cur_mode) {
             case ACCESS:
@@ -750,7 +759,7 @@ void access_handler(void *arg)
               aSystem.cur_mode = ACCESS;
           }
         }
-        OSTimeDly(50);
+        OSTimeDly(100);
       }  //while(aSystem.conn_status)
       netconn_close(conn);
       netconn_delete(conn);

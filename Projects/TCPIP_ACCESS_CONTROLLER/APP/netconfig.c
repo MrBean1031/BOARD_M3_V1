@@ -37,9 +37,9 @@ void LwIP_Init(void)
   netmask.addr = 0;
   gw.addr = 0; 
 #else										
-  IP4_ADDR(&ipaddr, 192, 168, 1, 254);   //设置网络接口的ip地址
+  IP4_ADDR(&ipaddr, 192, 168, 0, 254);   //设置网络接口的ip地址
   IP4_ADDR(&netmask, 255, 255, 255, 0);  //子网掩码
-  IP4_ADDR(&gw, 192, 168, 1, 1);			   //网关
+  IP4_ADDR(&gw, 192, 168, 0, 1);			   //网关
 #endif
    
   /* 初始化enc28j60与LWIP的接口，参数为网络接口结构体、ip地址、
