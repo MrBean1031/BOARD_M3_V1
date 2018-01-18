@@ -12,7 +12,7 @@
 #define LWIP_NETCONN                    1
 #define SYS_LIGHTWEIGHT_PROT            1  // 使用操作系统临界段
 #define TCPIP_THREAD_PRIO               9  // tcpip_thread内核线程优先级
-#define LWIP_DHCP                       0
+#define LWIP_DHCP                       1
 
 /*************************************************************************************************************************************/
 #define ETHARP_TMR_INTERVAL             5000  /* Time in milliseconds to perform ARP processing */

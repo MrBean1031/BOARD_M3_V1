@@ -450,13 +450,13 @@ static int sw_dev_blink(const char *name, u8 isblink, u32 msec, u8 times)
 
 static void door_unlock_callback(void *arg)
 {
-  sw_dev_change("relay", SW_ON); 
+  sw_dev_change("relay", SW_OFF); 
 }
 
 static int door_unlock(void)
 {
   int retval = 0;
-  sw_dev_change("relay", SW_OFF);
+  sw_dev_change("relay", SW_ON);
   retval = timer_event_add(0, door_unlock_callback, 5000);
   return !retval;
 }
@@ -481,7 +481,7 @@ void access_handler(void *arg)
   aSystem.conn_status = DISCONNECTED;
   aSystem.cur_mode = ACCESS;
   aSystem.stage = AUTHENT;
-  IP4_ADDR(&serv_addr, 192, 168, 0, 107);  //指定服务器地址
+  IP4_ADDR(&serv_addr, 172, 16, 23, 22);  //指定服务器地址
   do {
     mbox_access = OSMboxCreate(NULL);  //创建任务间通信的邮箱
   } while(!mbox_access);
@@ -495,13 +495,14 @@ void access_handler(void *arg)
 #else
     aSystem.local_addr = enc28j60.ip_addr;
 #endif
-
-    conn = netconn_new(NETCONN_TCP);
-    if (conn == NULL) {
-      puts("netconn_new() fail!\r\n");
-      OSTimeDly(100);
-      continue;
-    }
+    
+    do {
+      conn = netconn_new(NETCONN_TCP);
+      if (conn == NULL) {
+        puts("netconn_new() fail!\r\n");
+        OSTimeDly(100);
+      }
+    } while(conn == NULL);
     err = netconn_connect(conn, &serv_addr, 8080);
     if (err == ERR_OK) {
       aSystem.conn_status = CONNECTED;
@@ -510,6 +511,7 @@ void access_handler(void *arg)
       while (aSystem.conn_status == CONNECTED) {
         if (RFID_FindCard(&cInfo) == MI_OK) {
           sw_dev_blink("beep", 1, 100, 2);
+          sw_dev_blink("led0", 1, 100, 2);
           
           switch (aSystem.cur_mode) {
             case ACCESS:
@@ -563,7 +565,7 @@ void access_handler(void *arg)
                 }
                 door_unlock();  //开门
                 netbuf_delete(inbuf);
-              } 
+              }
               else if (*pData == ACCESS_BACK_NOTFOUND) {
                 puts("ACCESS MODE: get backlog \"ACCESS_BACK_NOTFOUND\"\r\n");
                 netbuf_delete(inbuf);
@@ -759,7 +761,7 @@ void access_handler(void *arg)
               aSystem.cur_mode = ACCESS;
           }
         }
-        OSTimeDly(100);
+        OSTimeDly(20);
       }  //while(aSystem.conn_status)
       netconn_close(conn);
       netconn_delete(conn);

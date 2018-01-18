@@ -50,7 +50,7 @@ struct access_record {
   uint8_t card_id[4];
   uint8_t name[ACCESS_RECORD_MAX_NAME_LEN];
   uint8_t ext_id[ACCESS_RECORD_MAX_EXT_ID_LEN];  //use as member id
-  enum aOperate way;
+  enum aOperate behavior;
   uint16_t auth_level;  //权限等级
   struct {
     uint8_t hour;
