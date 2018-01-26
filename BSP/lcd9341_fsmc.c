@@ -2,17 +2,17 @@
  *File Description: ILI9341底层驱动函数
  *Pin Mapping:      CS -> PD7 - FSMC_NE1
                     RS -> PD11- FSMC_A16
-										WR -> PD5 - FSMC_NWE
-										RD -> PD4 - FSMC_NOE
-										RST-> RST引脚
-										D[15:0] -> FSMC_D[15:0]
-										BLON -> PB0		
+                    WR -> PD5 - FSMC_NWE
+                    RD -> PD4 - FSMC_NOE
+                    RST-> RST引脚
+                    D[15:0] -> FSMC_D[15:0]
+                    BLON -> PB0
  *Author:           Mr.Bean
  *Date:             2017/4/30
  *Attention:        使用中文字符需要在SD卡或Flash里添加字模文件
                     并定义__USE_CHN
  */
- 
+
 #include "lcd9341_fsmc.h"
 //#include "SysTick.h"
 #include "delay_tim.h"
@@ -50,82 +50,82 @@ u16 FontColor=WHITE,BackColor=BLACK;  //字体颜色，字体背景颜色
 -----------------------------------------------------*/
 u8 LCD_SetWindow(u16 x, u16 y, u16 width, u16 height)
 {
-	if(x>=lcd_param.width || y>=lcd_param.height) return 1;
-	if(x+width-1>=lcd_param.width || y+height-1>=lcd_param.height) return 1;
-	LCD_WR_REG(0X2A);  //Column Address Set
-	LCD_WR_DATA(x>>8);  //SC
-	LCD_WR_DATA(x&0x00FF);
-	LCD_WR_DATA((x+width-1)>>8);  //EC
-	LCD_WR_DATA((x+width-1)&0X00FF);
-	LCD_WR_REG(0X2B);  //Page Address Set
-	LCD_WR_DATA(y>>8);  //SP
-	LCD_WR_DATA(y&0x00FF);
-	LCD_WR_DATA((y+height-1)>>8);  //EP
-	LCD_WR_DATA((y+height-1)&0X00FF);
-	return 0;
+  if(x>=lcd_param.width || y>=lcd_param.height) return 1;
+  if(x+width-1>=lcd_param.width || y+height-1>=lcd_param.height) return 1;
+  LCD_WR_REG(0X2A);  //Column Address Set
+  LCD_WR_DATA(x>>8);  //SC
+  LCD_WR_DATA(x&0x00FF);
+  LCD_WR_DATA((x+width-1)>>8);  //EC
+  LCD_WR_DATA((x+width-1)&0X00FF);
+  LCD_WR_REG(0X2B);  //Page Address Set
+  LCD_WR_DATA(y>>8);  //SP
+  LCD_WR_DATA(y&0x00FF);
+  LCD_WR_DATA((y+height-1)>>8);  //EP
+  LCD_WR_DATA((y+height-1)&0X00FF);
+  return 0;
 }
 
 void LCD_SetScreenDir(SCREEN_DIR dir)
 {
-	if(dir <= 7)
-		lcd_param.screendir = dir;
-	if(lcd_param.screendir <= 3)
-	{
-		lcd_param.width = 240;
-		lcd_param.height = 320;
-	}else
-	{
-		lcd_param.width = 320;
-		lcd_param.height = 240;
-	}
-	switch(lcd_param.screendir)
-	{
-		case L2R_U2D: LCD_WR_REG(0X36); LCD_WR_DATA(0X08); break;
-		case L2R_D2U: LCD_WR_REG(0X36); LCD_WR_DATA(0X88); break;
-		case R2L_U2D: LCD_WR_REG(0X36); LCD_WR_DATA(0X48); break;
-		case R2L_D2U: LCD_WR_REG(0X36); LCD_WR_DATA(0XC8); break;
-		case U2D_L2R: LCD_WR_REG(0X36); LCD_WR_DATA(0X28); break;
-		case U2D_R2L: LCD_WR_REG(0X36); LCD_WR_DATA(0X68); break;
-		case D2U_L2R: LCD_WR_REG(0X36); LCD_WR_DATA(0XA8); break;
-		case D2U_R2L: LCD_WR_REG(0X36); LCD_WR_DATA(0XE8); break;
-	}
+  if(dir <= 7)
+    lcd_param.screendir = dir;
+  if(lcd_param.screendir <= 3)
+  {
+    lcd_param.width = 240;
+    lcd_param.height = 320;
+  }else
+  {
+    lcd_param.width = 320;
+    lcd_param.height = 240;
+  }
+  switch(lcd_param.screendir)
+  {
+    case L2R_U2D: LCD_WR_REG(0X36); LCD_WR_DATA(0X08); break;
+    case L2R_D2U: LCD_WR_REG(0X36); LCD_WR_DATA(0X88); break;
+    case R2L_U2D: LCD_WR_REG(0X36); LCD_WR_DATA(0X48); break;
+    case R2L_D2U: LCD_WR_REG(0X36); LCD_WR_DATA(0XC8); break;
+    case U2D_L2R: LCD_WR_REG(0X36); LCD_WR_DATA(0X28); break;
+    case U2D_R2L: LCD_WR_REG(0X36); LCD_WR_DATA(0X68); break;
+    case D2U_L2R: LCD_WR_REG(0X36); LCD_WR_DATA(0XA8); break;
+    case D2U_R2L: LCD_WR_REG(0X36); LCD_WR_DATA(0XE8); break;
+  }
 }
 
 void LCD_DrawPoint(u16 x, u16 y, u16 color)
 {
-	LCD_SetWindow(x, y, 1, 1);
-	LCD_WR_REG(0X2C);  //Memory Write
-	LCD_WR_DATA(color);
+  LCD_SetWindow(x, y, 1, 1);
+  LCD_WR_REG(0X2C);  //Memory Write
+  LCD_WR_DATA(color);
 }
 
 u16 LCD_GetPoint(u16 x, u16 y)
 {
-	u16 val,r,g,b;
-	LCD_SetWindow(x, y, 1, 1);
-	LCD_WR_REG(0X2E);  //Memory Read
-	LCD_RD_DATA();  //dummy read
-	val = LCD_RD_DATA();  //read GRAM
-	r = val>>11;
-	g = (val & 0x00FC) >> 2;
-	val = LCD_RD_DATA();  //read GRAM
-	b = val>>11;
-	val = r<<11 | g<<5 | b;
-	return val;
+  u16 val,r,g,b;
+  LCD_SetWindow(x, y, 1, 1);
+  LCD_WR_REG(0X2E);  //Memory Read
+  LCD_RD_DATA();  //dummy read
+  val = LCD_RD_DATA();  //read GRAM
+  r = val>>11;
+  g = (val & 0x00FC) >> 2;
+  val = LCD_RD_DATA();  //read GRAM
+  b = val>>11;
+  val = r<<11 | g<<5 | b;
+  return val;
 }
 
 void LCD_ReadBuffer(u16 x, u16 y, u16 width, u16 height, u8 *buff)
 {
-	u16 val;
+  u16 val;
   u8 r,g,b,r2,tick;
   u32 i;
-	val = LCD_SetWindow(x, y, width, height);
+  val = LCD_SetWindow(x, y, width, height);
   if (val)
   {
     return;
   }
   tick = 0;
-	LCD_WR_REG(0X2E);  //Memory Read
-	LCD_RD_DATA();  //dummy read
+  LCD_WR_REG(0X2E);  //Memory Read
+  LCD_RD_DATA();  //dummy read
   for (i = 0; i < width * height; i++)
   {
     if(tick == 0)
@@ -154,36 +154,36 @@ void LCD_ReadBuffer(u16 x, u16 y, u16 width, u16 height, u8 *buff)
 
 void LCD_FillColor(u16 x, u16 y, u16 width, u16 height, u16 color)
 {
-	u32 i;
-	LCD_SetWindow(x, y, width, height);
-	LCD_WR_REG(0X2C);
-	for(i = 0; i < width * height; i++)
-	{
-		LCD_WR_DATA(color);
-	}
+  u32 i;
+  LCD_SetWindow(x, y, width, height);
+  LCD_WR_REG(0X2C);
+  for(i = 0; i < width * height; i++)
+  {
+    LCD_WR_DATA(color);
+  }
 }
 
 void LCD_FillBuffer(u16 x, u16 y, u16 width, u16 height, u8 *buff)
 {
-	u32 i;
-	LCD_SetWindow(x, y, width, height);
-	LCD_WR_REG(0X2C);
-	for(i = 0; i < width * height; i++)
-	{
-		LCD_WR_DATA(*(u16 *)(buff + 2*i));
-	}
+  u32 i;
+  LCD_SetWindow(x, y, width, height);
+  LCD_WR_REG(0X2C);
+  for(i = 0; i < width * height; i++)
+  {
+    LCD_WR_DATA(*(u16 *)(buff + 2*i));
+  }
 }
 
 void ILI9341_Initial(void)
 {
-	GPIO_InitTypeDef GPIO_InitStruct;
-	FSMC_NORSRAMInitTypeDef FSMC_NORInitStruct;
+  GPIO_InitTypeDef GPIO_InitStruct;
+  FSMC_NORSRAMInitTypeDef FSMC_NORInitStruct;
   FSMC_NORSRAMTimingInitTypeDef FSMC_NORTiming;
-  
+
   //使能GPIO和FSMC的时钟
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOD | RCC_APB2Periph_GPIOE, ENABLE);
   RCC_AHBPeriphClockCmd(RCC_AHBPeriph_FSMC, ENABLE);
-	
+
   /* 初始化FSMC的NE1,NWE,NOE,A[23:0],D[15:0]为推挽复用输出 */
   GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF_PP;
   GPIO_InitStruct.GPIO_Pin = GPIO_Pin_3|GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_7|GPIO_Pin_11|GPIO_Pin_0|
@@ -202,7 +202,7 @@ void ILI9341_Initial(void)
   GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0;
   GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_Init(GPIOB, &GPIO_InitStruct);
-  
+
   //配置FSMC_NOR的时序
   FSMC_NORTiming.FSMC_CLKDivision = 1;  //HCLK的2分频
   FSMC_NORTiming.FSMC_AccessMode = FSMC_AccessMode_B;  //访问模式，只有当扩展模式下才有效
@@ -211,7 +211,7 @@ void ILI9341_Initial(void)
   FSMC_NORTiming.FSMC_DataSetupTime = 20;
   FSMC_NORTiming.FSMC_DataLatency = 5;  //同步成组式的NOR的数据保持时间，异步模式不使用
   FSMC_NORTiming.FSMC_BusTurnAroundDuration = 15;  //总线恢复时间，用于地址数据复用
-  
+
   //配置FSMC_NOR参数
   FSMC_NORInitStruct.FSMC_Bank = FSMC_Bank1_NORSRAM1;  //NORSRAM1使用FSMC_NE1
   FSMC_NORInitStruct.FSMC_DataAddressMux = FSMC_DataAddressMux_Disable;  //数据地址线复用使能
@@ -230,108 +230,108 @@ void ILI9341_Initial(void)
   FSMC_NORInitStruct.FSMC_WriteTimingStruct = &FSMC_NORTiming;
   FSMC_NORSRAMInit(&FSMC_NORInitStruct);  //初始化
   FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM1,ENABLE);  //使能FSMC_Bank1_NORSRAM1
-  
+
   LCD_WR_REG(0X01);  //SOFTWARE RESET
   Delay_us(10000);  //延时10ms
-	LCD_WR_REG(0XD3);  //读ID4
-	LCD_RD_DATA();  //xx
-	LCD_RD_DATA();  //0X00
-	lcd_param.id = LCD_RD_DATA()&0xFF;  //0X93
-	lcd_param.id = (lcd_param.id<<8) + (LCD_RD_DATA()&0xFF);  //0X41
-	printf("LCD ID %04X\r\n", lcd_param.id);
-	if(lcd_param.id == 0X9341)
-	{
-		lcd_param.screendir = L2R_U2D;
-		lcd_param.width = 240;
-		lcd_param.height = 320;
-		
-		//************* Start Initial Sequence **********//
-		LCD_ILI9341_CMD(0xCF);
-		LCD_ILI9341_Parameter(0x00);
-		LCD_ILI9341_Parameter(0x83);
-		LCD_ILI9341_Parameter(0X30);
-		LCD_ILI9341_CMD(0xED);
-		LCD_ILI9341_Parameter(0x64);
-		LCD_ILI9341_Parameter(0x03);
-		LCD_ILI9341_Parameter(0X12);
-		LCD_ILI9341_Parameter(0X81);
-		LCD_ILI9341_CMD(0xE8);
-		LCD_ILI9341_Parameter(0x85);
-		LCD_ILI9341_Parameter(0x01);
-		LCD_ILI9341_Parameter(0x79);
-		LCD_ILI9341_CMD(0xCB);
-		LCD_ILI9341_Parameter(0x39);
-		LCD_ILI9341_Parameter(0x2C);
-		LCD_ILI9341_Parameter(0x00);
-		LCD_ILI9341_Parameter(0x34);
-		LCD_ILI9341_Parameter(0x02);
-		LCD_ILI9341_CMD(0xF7);
-		LCD_ILI9341_Parameter(0x20);
-		LCD_ILI9341_CMD(0xEA);
-		LCD_ILI9341_Parameter(0x00);
-		LCD_ILI9341_Parameter(0x00);
-		LCD_ILI9341_CMD(0xC0); //Power control
-		LCD_ILI9341_Parameter(0x1D); //VRH[5:0]
-		LCD_ILI9341_CMD(0xC1); //Power control
-		LCD_ILI9341_Parameter(0x11); //SAP[2:0];BT[3:0]
-		LCD_ILI9341_CMD(0xC5); //VCM control
-		LCD_ILI9341_Parameter(0x33);
-		LCD_ILI9341_Parameter(0x34);
-		LCD_ILI9341_CMD(0xC7); //VCM control2
-		LCD_ILI9341_Parameter(0Xbe);
-		LCD_ILI9341_CMD(0x36); // Memory Access Control
-		LCD_ILI9341_Parameter(0x08);
-		LCD_ILI9341_CMD(0xB1);
-		LCD_ILI9341_Parameter(0x00);
-		LCD_ILI9341_Parameter(0x1B);
-		LCD_ILI9341_CMD(0xB6); // Display Function Control
-		LCD_ILI9341_Parameter(0x0A);
-		LCD_ILI9341_Parameter(0xA2);
-		LCD_ILI9341_CMD(0xF2); // 3Gamma Function Disable
-		LCD_ILI9341_Parameter(0x00);
-		LCD_ILI9341_CMD(0x26); //Gamma curve selected
-		LCD_ILI9341_Parameter(0x01);
-		LCD_ILI9341_CMD(0xE0); //Set Gamma
-		LCD_ILI9341_Parameter(0x0F);
-		LCD_ILI9341_Parameter(0x23);
-		LCD_ILI9341_Parameter(0x1F);
-		LCD_ILI9341_Parameter(0x09);
-		LCD_ILI9341_Parameter(0x0f);
-		LCD_ILI9341_Parameter(0x08);
-		LCD_ILI9341_Parameter(0x4B);
-		LCD_ILI9341_Parameter(0Xf2);
-		LCD_ILI9341_Parameter(0x38);
-		LCD_ILI9341_Parameter(0x09);
-		LCD_ILI9341_Parameter(0x13);
-		LCD_ILI9341_Parameter(0x03);
-		LCD_ILI9341_Parameter(0x12);
-		LCD_ILI9341_Parameter(0x07);
-		LCD_ILI9341_Parameter(0x04);
-		LCD_ILI9341_CMD(0XE1); //Set Gamma
-		LCD_ILI9341_Parameter(0x00);
-		LCD_ILI9341_Parameter(0x1d);
-		LCD_ILI9341_Parameter(0x20);
-		LCD_ILI9341_Parameter(0x02);
-		LCD_ILI9341_Parameter(0x11);
-		LCD_ILI9341_Parameter(0x07);
-		LCD_ILI9341_Parameter(0x34);
-		LCD_ILI9341_Parameter(0x81);
-		LCD_ILI9341_Parameter(0x46);
-		LCD_ILI9341_Parameter(0x06);
-		LCD_ILI9341_Parameter(0x0e);
-		LCD_ILI9341_Parameter(0x0c);
-		LCD_ILI9341_Parameter(0x32);
-		LCD_ILI9341_Parameter(0x38);
-		LCD_ILI9341_Parameter(0x0F);
-		LCD_ILI9341_CMD(0X3A);  //COLMOD:16bit or 18bit
-		LCD_ILI9341_Parameter(0X55);
-		LCD_ILI9341_CMD(0X11);  //SLEEP OUT
-		Delay_us(120000);  //delay 120ms
-		LCD_ILI9341_CMD(0X29);  //DISPLAY ON
-	
-		LCD_BL_ON;
-		LCD_FillColor(0,0,240,320, BackColor);
-	}
+  LCD_WR_REG(0XD3);  //读ID4
+  LCD_RD_DATA();  //xx
+  LCD_RD_DATA();  //0X00
+  lcd_param.id = LCD_RD_DATA()&0xFF;  //0X93
+  lcd_param.id = (lcd_param.id<<8) + (LCD_RD_DATA()&0xFF);  //0X41
+  printf("LCD ID %04X\r\n", lcd_param.id);
+  if(lcd_param.id == 0X9341)
+  {
+    lcd_param.screendir = L2R_U2D;
+    lcd_param.width = 240;
+    lcd_param.height = 320;
+
+    //************* Start Initial Sequence **********//
+    LCD_ILI9341_CMD(0xCF);
+    LCD_ILI9341_Parameter(0x00);
+    LCD_ILI9341_Parameter(0x83);
+    LCD_ILI9341_Parameter(0X30);
+    LCD_ILI9341_CMD(0xED);
+    LCD_ILI9341_Parameter(0x64);
+    LCD_ILI9341_Parameter(0x03);
+    LCD_ILI9341_Parameter(0X12);
+    LCD_ILI9341_Parameter(0X81);
+    LCD_ILI9341_CMD(0xE8);
+    LCD_ILI9341_Parameter(0x85);
+    LCD_ILI9341_Parameter(0x01);
+    LCD_ILI9341_Parameter(0x79);
+    LCD_ILI9341_CMD(0xCB);
+    LCD_ILI9341_Parameter(0x39);
+    LCD_ILI9341_Parameter(0x2C);
+    LCD_ILI9341_Parameter(0x00);
+    LCD_ILI9341_Parameter(0x34);
+    LCD_ILI9341_Parameter(0x02);
+    LCD_ILI9341_CMD(0xF7);
+    LCD_ILI9341_Parameter(0x20);
+    LCD_ILI9341_CMD(0xEA);
+    LCD_ILI9341_Parameter(0x00);
+    LCD_ILI9341_Parameter(0x00);
+    LCD_ILI9341_CMD(0xC0); //Power control
+    LCD_ILI9341_Parameter(0x1D); //VRH[5:0]
+    LCD_ILI9341_CMD(0xC1); //Power control
+    LCD_ILI9341_Parameter(0x11); //SAP[2:0];BT[3:0]
+    LCD_ILI9341_CMD(0xC5); //VCM control
+    LCD_ILI9341_Parameter(0x33);
+    LCD_ILI9341_Parameter(0x34);
+    LCD_ILI9341_CMD(0xC7); //VCM control2
+    LCD_ILI9341_Parameter(0Xbe);
+    LCD_ILI9341_CMD(0x36); // Memory Access Control
+    LCD_ILI9341_Parameter(0x08);
+    LCD_ILI9341_CMD(0xB1);
+    LCD_ILI9341_Parameter(0x00);
+    LCD_ILI9341_Parameter(0x1B);
+    LCD_ILI9341_CMD(0xB6); // Display Function Control
+    LCD_ILI9341_Parameter(0x0A);
+    LCD_ILI9341_Parameter(0xA2);
+    LCD_ILI9341_CMD(0xF2); // 3Gamma Function Disable
+    LCD_ILI9341_Parameter(0x00);
+    LCD_ILI9341_CMD(0x26); //Gamma curve selected
+    LCD_ILI9341_Parameter(0x01);
+    LCD_ILI9341_CMD(0xE0); //Set Gamma
+    LCD_ILI9341_Parameter(0x0F);
+    LCD_ILI9341_Parameter(0x23);
+    LCD_ILI9341_Parameter(0x1F);
+    LCD_ILI9341_Parameter(0x09);
+    LCD_ILI9341_Parameter(0x0f);
+    LCD_ILI9341_Parameter(0x08);
+    LCD_ILI9341_Parameter(0x4B);
+    LCD_ILI9341_Parameter(0Xf2);
+    LCD_ILI9341_Parameter(0x38);
+    LCD_ILI9341_Parameter(0x09);
+    LCD_ILI9341_Parameter(0x13);
+    LCD_ILI9341_Parameter(0x03);
+    LCD_ILI9341_Parameter(0x12);
+    LCD_ILI9341_Parameter(0x07);
+    LCD_ILI9341_Parameter(0x04);
+    LCD_ILI9341_CMD(0XE1); //Set Gamma
+    LCD_ILI9341_Parameter(0x00);
+    LCD_ILI9341_Parameter(0x1d);
+    LCD_ILI9341_Parameter(0x20);
+    LCD_ILI9341_Parameter(0x02);
+    LCD_ILI9341_Parameter(0x11);
+    LCD_ILI9341_Parameter(0x07);
+    LCD_ILI9341_Parameter(0x34);
+    LCD_ILI9341_Parameter(0x81);
+    LCD_ILI9341_Parameter(0x46);
+    LCD_ILI9341_Parameter(0x06);
+    LCD_ILI9341_Parameter(0x0e);
+    LCD_ILI9341_Parameter(0x0c);
+    LCD_ILI9341_Parameter(0x32);
+    LCD_ILI9341_Parameter(0x38);
+    LCD_ILI9341_Parameter(0x0F);
+    LCD_ILI9341_CMD(0X3A);  //COLMOD:16bit or 18bit
+    LCD_ILI9341_Parameter(0X55);
+    LCD_ILI9341_CMD(0X11);  //SLEEP OUT
+    Delay_us(120000);  //delay 120ms
+    LCD_ILI9341_CMD(0X29);  //DISPLAY ON
+
+    LCD_BL_ON;
+    LCD_FillColor(0,0,240,320, BackColor);
+  }
 }
 
 
@@ -343,98 +343,98 @@ void ILI9341_Initial(void)
  - Input:         x1, y1, x2, y2, color
  - Output:        None
  - Return:        None
- - Attention:     
+ - Attention:
 -----------------------------------------------------*/
 void LCD_DrawLine(u16 x1, u16 y1, u16 x2, u16 y2, u16 color)
 {
-	u16 t; 
-	int xerr = 0, yerr = 0, delta_x, delta_y, distance; 
-	int incx, incy, uRow, uCol; 
+  u16 t;
+  int xerr = 0, yerr = 0, delta_x, delta_y, distance;
+  int incx, incy, uRow, uCol;
 
-	delta_x = x2 - x1;  //计算坐标增量 
-	delta_y = y2 - y1; 
-	uRow = x1; 
-	uCol = y1; 
-	if (delta_x > 0) {
-    incx = 1;  //设置单步方向 
+  delta_x = x2 - x1;  //计算坐标增量
+  delta_y = y2 - y1;
+  uRow = x1;
+  uCol = y1;
+  if (delta_x > 0) {
+    incx = 1;  //设置单步方向
   } else if (delta_x == 0) {
-    incx = 0;  //垂直线 
+    incx = 0;  //垂直线
   } else {
     incx = -1;
     delta_x = -delta_x;
-  } 
-	if (delta_y > 0) {
-    incy = 1; 
+  }
+if (delta_y > 0) {
+    incy = 1;
   } else if (delta_y == 0) {
-    incy = 0;  //水平线 
+    incy = 0;  //水平线
   } else {
     incy = -1;
     delta_y = -delta_y;
-  } 
-	if (delta_x > delta_y) {
-    distance = delta_x;  //选取基本增量坐标轴 
+  }
+  if (delta_x > delta_y) {
+    distance = delta_x;  //选取基本增量坐标轴
   } else {
     distance = delta_y;
   }
-	for (t = 0; t <= distance + 1; t++) { //画线输出  
-		LCD_DrawPoint(uRow, uCol, color);  //画点 
-		xerr += delta_x ;
-		yerr += delta_y ;
-		if (xerr > distance) { 
-			xerr -= distance; 
-			uRow += incx; 
-		} 
-		if (yerr > distance) { 
-			yerr -= distance; 
-			uCol += incy; 
-		}
-	}
+  for (t = 0; t <= distance + 1; t++) { //画线输出
+    LCD_DrawPoint(uRow, uCol, color);  //画点
+    xerr += delta_x ;
+    yerr += delta_y ;
+    if (xerr > distance) {
+      xerr -= distance;
+      uRow += incx;
+    }
+    if (yerr > distance) {
+      yerr -= distance;
+      uCol += incy;
+    }
+  }
 }
 
 void LCD_DrawRectangle(u16 x1, u16 y1, u16 x2, u16 y2, u16 color)
 {
-	LCD_DrawLine(x1,y1,x2,y1,color);
-	LCD_DrawLine(x2,y1,x2,y2,color);
-	LCD_DrawLine(x2,y2,x1,y2,color);
-	LCD_DrawLine(x1,y2,x1,y1,color);
+  LCD_DrawLine(x1,y1,x2,y1,color);
+  LCD_DrawLine(x2,y1,x2,y2,color);
+  LCD_DrawLine(x2,y2,x1,y2,color);
+  LCD_DrawLine(x1,y2,x1,y1,color);
 }
 
 /*-----------------------------------------------------
  - Function Name: LCD_DrawCircle
  - Description:   画圆函数，使用了bresenham算法，直接用
                   整数计算坐标，减少运算时间
- - Input:         
- - Output:        
- - Return:        
- - Attention:     
+ - Input:
+ - Output:
+ - Return:
+ - Attention:
 -----------------------------------------------------*/
 void LCD_DrawCircle(u16 x0, u16 y0, u8 r, u16 color)
 {
-	int a, b;
-	int di;
-	a = 0, b = r;	  
-	di = 3 - (r << 1);             //判断下个点位置的标志
-	while(a <= b)
-	{
-		LCD_DrawPoint(x0 - b, y0 - a, color);             //3           
-		LCD_DrawPoint(x0 + b, y0 - a, color);             //0           
-		LCD_DrawPoint(x0 - a, y0 + b, color);             //1       
-		LCD_DrawPoint(x0 - b, y0 - a, color);             //7           
-		LCD_DrawPoint(x0 - a, y0 - b, color);             //2             
-		LCD_DrawPoint(x0 + b, y0 + a, color);             //4               
-		LCD_DrawPoint(x0 + a, y0 - b, color);             //5
-		LCD_DrawPoint(x0 + a, y0 + b, color);             //6 
-		LCD_DrawPoint(x0 - b, y0 + a, color);             
-		a++;
-		//使用Bresenham算法画圆     
-		if(di < 0) {
-			di += 4 * a + 6;	  
-		} else {
-			di += 10 + 4 * (a - b);   
-			b--;
-		} 
-		LCD_DrawPoint(x0 + a, y0 + b, color);
-	}
+  int a, b;
+  int di;
+  a = 0, b = r;
+  di = 3 - (r << 1);             //判断下个点位置的标志
+  while(a <= b)
+  {
+    LCD_DrawPoint(x0 - b, y0 - a, color);             //3
+    LCD_DrawPoint(x0 + b, y0 - a, color);             //0
+    LCD_DrawPoint(x0 - a, y0 + b, color);             //1
+    LCD_DrawPoint(x0 - b, y0 - a, color);             //7
+    LCD_DrawPoint(x0 - a, y0 - b, color);             //2
+    LCD_DrawPoint(x0 + b, y0 + a, color);             //4
+    LCD_DrawPoint(x0 + a, y0 - b, color);             //5
+    LCD_DrawPoint(x0 + a, y0 + b, color);             //6
+    LCD_DrawPoint(x0 - b, y0 + a, color);
+    a++;
+    //使用Bresenham算法画圆
+    if(di < 0) {
+      di += 4 * a + 6;
+    } else {
+      di += 10 + 4 * (a - b);
+      b--;
+    }
+    LCD_DrawPoint(x0 + a, y0 + b, color);
+  }
 }
 
 /*-----------------------------------------------------
@@ -451,10 +451,10 @@ void LCD_DrawCircle(u16 x0, u16 y0, u8 r, u16 color)
 -----------------------------------------------------*/
 void LCD_ShowChar(u16 x, u16 y, char ch, u8 size, u16 mode)
 {
-	int i,j;
-	u8 *cache, *buff;
-	u16 csize, x0 = x, y0 = y, color = FontColor;
-	csize = (size/8 + !!(size%8)) * (size/2);  //字模所占字节数
+  int i,j;
+  u8 *cache, *buff;
+  u16 csize, x0 = x, y0 = y, color = FontColor;
+  csize = (size/8 + !!(size%8)) * (size/2);  //字模所占字节数
 
   buff = (u8 *)MALLOC(size * size / 2 * 2);
   if(buff == 0)
@@ -470,7 +470,7 @@ void LCD_ShowChar(u16 x, u16 y, char ch, u8 size, u16 mode)
       *(u16 *)(buff + 2*i) = BackColor;
     }
   }
-  switch(size) 
+  switch(size)
   {
     case 12:
       cache = (u8 *)ascii12[ch - ' '];
@@ -482,12 +482,12 @@ void LCD_ShowChar(u16 x, u16 y, char ch, u8 size, u16 mode)
       cache = (u8 *)ascii24[ch - ' '];
       break;
   }
-	for(i = 0; i < csize; i++)
-	{
+  for(i = 0; i < csize; i++)
+  {
     for(j = 0; j < 8; j++)
     {
-      if(cache[i] & 0x80>>j) 
-        memcpy(buff + (y-y0)*size + (x-x0)*2, &color, 2); 
+      if(cache[i] & 0x80>>j)
+        memcpy(buff + (y-y0)*size + (x-x0)*2, &color, 2);
       y++;
       if(y - y0 >= size)
       {
@@ -496,7 +496,7 @@ void LCD_ShowChar(u16 x, u16 y, char ch, u8 size, u16 mode)
        break;
       }
     }
-	}
+  }
   LCD_FillBuffer(x0, y0, size / 2, size, buff);
   FREE(buff);
 }
@@ -504,13 +504,13 @@ void LCD_ShowChar(u16 x, u16 y, char ch, u8 size, u16 mode)
 #ifdef __USE_CHN
 void LCD_ShowChn(u16 x, u16 y, const char* ch, u8 size, u8 mode)
 {
-	u32 offset = 0, i, j;
-	u16 csize, br, x0 = x, y0 = y;  //字模字节数,f_read()读出的字节数，初始坐标
+  u32 offset = 0, i, j;
+  u16 csize, br, x0 = x, y0 = y;  //字模字节数,f_read()读出的字节数，初始坐标
   u16 color = FontColor;
-	u8 gbh=0, gbl=0;  //汉字内码高字节，内码低字节
+  u8 gbh=0, gbl=0;  //汉字内码高字节，内码低字节
   u8 *buff, *matrix;
 
-	csize = (size/8 + !!(size%8)) * size;
+  csize = (size/8 + !!(size%8)) * size;
   matrix = (u8 *)MALLOC(csize);
   if(matrix == 0)
   {
@@ -522,11 +522,11 @@ void LCD_ShowChn(u16 x, u16 y, const char* ch, u8 size, u8 mode)
     FREE(matrix);
     return;
   }
-	gbh = ch[0], gbl = ch[1];  //字节序为大端模式
-	if(gbl < 0x7F)
-		offset = ((gbh-0x81)*190 + gbl-0x40) * csize;
+  gbh = ch[0], gbl = ch[1];  //字节序为大端模式
+  if(gbl < 0x7F)
+    offset = ((gbh-0x81)*190 + gbl-0x40) * csize;
   else if(gbl >= 0x80)
-		offset = ((gbh-0x81)*190 + gbl-0x41) * csize;
+    offset = ((gbh-0x81)*190 + gbl-0x41) * csize;
   if (mode)
     LCD_ReadBuffer(x0, y0, size, size, buff);
   else
@@ -536,25 +536,25 @@ void LCD_ShowChn(u16 x, u16 y, const char* ch, u8 size, u8 mode)
       *(u16 *)(buff + 2*i) = BackColor;
     }
   }
-	if(size == 16)
-		resff = f_open(&fileff, _T("0:/GBK16.DZK"), FA_READ | FA_OPEN_EXISTING);
+  if(size == 16)
+    resff = f_open(&fileff, _T("0:/GBK16.DZK"), FA_READ | FA_OPEN_EXISTING);
   else if(size == 12)
-		resff = f_open(&fileff, _T("0:/GBK12.DZK"), FA_READ | FA_OPEN_EXISTING);
+    resff = f_open(&fileff, _T("0:/GBK12.DZK"), FA_READ | FA_OPEN_EXISTING);
   else if(size == 24)
-		resff = f_open(&fileff, _T("0:/GBK24.DZK"), FA_READ | FA_OPEN_EXISTING); 
-	if(resff == FR_OK)
-	{
-		f_lseek(&fileff, offset);  //移动到对应偏移量
-		f_read(&fileff, matrix, csize, (UINT*)&br);
-		if(br < csize)
+    resff = f_open(&fileff, _T("0:/GBK24.DZK"), FA_READ | FA_OPEN_EXISTING);
+  if(resff == FR_OK)
+  {
+    f_lseek(&fileff, offset);  //移动到对应偏移量
+    f_read(&fileff, matrix, csize, (UINT*)&br);
+    if(br < csize)
     {
       f_close(&fileff);
       FREE(matrix);
       FREE(buff);
       return;  //错误返回
     }
-		for(i = 0; i < csize; i++)
-		{
+    for(i = 0; i < csize; i++)
+    {
       for(j = 0; j < 8; j++)
       {
         if(matrix[i] & 0x80>>j)
@@ -567,10 +567,10 @@ void LCD_ShowChn(u16 x, u16 y, const char* ch, u8 size, u8 mode)
           break;
         }
       }
-		}
-		f_close(&fileff);
+    }
+    f_close(&fileff);
     LCD_FillBuffer(x0, y0, size, size, buff);
-	}
+  }
   FREE(matrix);
   FREE(buff);
 }
@@ -595,7 +595,7 @@ void LCD_ShowChn(u16 x, u16 y, const char* ch, u8 size, u8 mode)
 -----------------------------------------------------*/
 int LCD_ShowStr(u16 x, u16 y, const char *str, u8 size, u8 mode, u16 cols)
 {
-	u16 x0 = x;
+  u16 x0 = x;
   u16 xend;
   int lines;
 
@@ -603,10 +603,10 @@ int LCD_ShowStr(u16 x, u16 y, const char *str, u8 size, u8 mode, u16 cols)
     return 0;
   lines = 1;
   xend = x0 + cols * size / 2;
-	while(*str != '\0')
-	{
-		if(*str & 0x80)  //中文文本
-		{
+  while(*str != '\0')
+  {
+    if(*str & 0x80)  //中文文本
+    {
 #ifdef __USE_CHN
       if(x + size > xend)
       {
@@ -615,30 +615,30 @@ int LCD_ShowStr(u16 x, u16 y, const char *str, u8 size, u8 mode, u16 cols)
         y += size;
         lines++;
       }
-			LCD_ShowChn(x, y, str, size, mode);
-			x = x + size;
-			if(x + size / 2 > xend && str[2])
-			{
-				x = x0;
-				y = y + size;
+      LCD_ShowChn(x, y, str, size, mode);
+      x = x + size;
+      if(x + size / 2 > xend && str[2])
+      {
+        x = x0;
+        y = y + size;
         lines++;
-			}
+      }
 #endif
-			str = str + 2;
-		}
+      str = str + 2;
+    }
     else  //英文文本
-		{
-			LCD_ShowChar(x, y, *str, size, mode);
-			x = x + size / 2;
-			if(x + size / 2 > xend && str[1])
-			{
-				x = x0;
-				y = y + size;
+    {
+      LCD_ShowChar(x, y, *str, size, mode);
+      x = x + size / 2;
+      if(x + size / 2 > xend && str[1])
+      {
+        x = x0;
+        y = y + size;
         lines++;
-			}
-			str++;
-		}
-	}
+      }
+      str++;
+    }
+  }
   if(y + size >= lcd_param.height)
   {
     return lines;
@@ -686,9 +686,9 @@ void LCD_PutChar(u8 c, u8 size, u8 cls)
         line += 1;
       } else {
         if (c < 0x80) {  //英文文本
-		    	LCD_ShowChar(col * 8, line * 16, c, 16, 0);
-		    	col += 1;
-		    } else {
+          LCD_ShowChar(col * 8, line * 16, c, 16, 0);
+          col += 1;
+        } else {
           oem[0] = c;
           status = 2;
         }
@@ -700,11 +700,11 @@ void LCD_PutChar(u8 c, u8 size, u8 cls)
         line += 1;
         status = 0;
       } else if (c < 0x80) {
-		    LCD_ShowChar(col * 8, line * 16, c, 16, 0);
-		    col += 1;
+        LCD_ShowChar(col * 8, line * 16, c, 16, 0);
+        col += 1;
         status = 0;
       } else {
-        oem[0] = c; 
+        oem[0] = c;
         status = 2;
       }
       break;
@@ -719,10 +719,10 @@ void LCD_PutChar(u8 c, u8 size, u8 cls)
     default:
       status = 0;
   }
- 	if (col * 8 + 8 >= lcd_param.width) {
- 		col = 0;
- 		line += 1;
- 	}
+   if (col * 8 + 8 >= lcd_param.width) {
+     col = 0;
+     line += 1;
+   }
   if (line * 16 + 16 >= lcd_param.height) {
     line = 0;
     col = 0;
@@ -735,61 +735,61 @@ void LCD_PutChar(u8 c, u8 size, u8 cls)
 /*将整数转换成字符串，value为输入的整形变量，s保存转换结果，radix = 10表示十进制，其他输出NULL*/
 char *inter2string(int value, char *s, int radix)
 {
-	char* tmp = s;
-	int count = 0,digit[12] = {0};
-	if(radix == 10)
-	{
-		if(value < 0)
-		{
-			value = -value;
-			*tmp++ = '-';
-		}
-		do {
-			digit[count] = value % 10 + '0';
-			value = value/10;
-			count++;
-		} while(value != 0);
-		for(; count > 0; count--)
-		{
-			*tmp = (char)digit[count-1];
-			tmp++;
-		}
-		*tmp = '\0';  //补充字符串结束标志
-		return s;
-	}
-	else
-	{
-		*s = '\0';
-		return NULL;
-	}
-} 
+  char* tmp = s;
+  int count = 0,digit[12] = {0};
+  if(radix == 10)
+  {
+    if(value < 0)
+    {
+      value = -value;
+      *tmp++ = '-';
+    }
+    do {
+      digit[count] = value % 10 + '0';
+      value = value/10;
+      count++;
+    } while(value != 0);
+    for(; count > 0; count--)
+    {
+      *tmp = (char)digit[count-1];
+      tmp++;
+    }
+    *tmp = '\0';  //补充字符串结束标志
+    return s;
+  }
+  else
+  {
+    *s = '\0';
+    return NULL;
+  }
+}
 
 void LCD_ShowNum(u16 x, u16 y, int num, u8 size, u8 mode, u8 length)
 {
-	//32bit整形变量十进制表示最大长度12（含正负号，字符串结束标志）
-	char num2str[12];
-	u8 strlen = 0, i;
-	inter2string(num, num2str, 10);
-	while(num2str[strlen] != '\0')
+  //32bit整形变量十进制表示最大长度12（含正负号，字符串结束标志）
+  char num2str[12];
+  u8 strlen = 0, i;
+  inter2string(num, num2str, 10);
+  while(num2str[strlen] != '\0')
     strlen++;
-	if(strlen <= length)
-	{
-		//填充空格使字符串右对齐
-		for(i = 0; i < length - strlen; i++)
-		{
-			LCD_ShowChar(x, y, 0X20, size, mode);  
-			x += size / 2;
-		}
-		LCD_ShowStr(x, y, (const char *)num2str, size, mode, strlen);
-	}
-	else
+  if(strlen <= length)
   {
-		for(i = 0; length > 2 && i < length - 2; i++)
-		{
-			LCD_ShowChar(x, y,  0X20, size, mode);
-			x += size / 2;
-		}
-		LCD_ShowStr(x, y, "OF", size, mode, 2);
-	}
+    //填充空格使字符串右对齐
+    for(i = 0; i < length - strlen; i++)
+    {
+      LCD_ShowChar(x, y, 0X20, size, mode);
+      x += size / 2;
+    }
+    LCD_ShowStr(x, y, (const char *)num2str, size, mode, strlen);
+  }
+  else
+  {
+    for(i = 0; length > 2 && i < length - 2; i++)
+    {
+      LCD_ShowChar(x, y,  0X20, size, mode);
+      x += size / 2;
+    }
+    LCD_ShowStr(x, y, "OF", size, mode, 2);
+  }
 }
 

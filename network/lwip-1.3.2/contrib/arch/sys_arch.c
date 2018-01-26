@@ -19,7 +19,7 @@ static OS_STK thread_stk[MAX_LWIP_THREADS][THREAD_STK_SIZE];
 
 /*-----------------------------------------------------
  - Function Name: sys_init()
- - Description:   
+ - Description:
  - Input:         None
  - Output:        None
  - Return:        None
@@ -28,7 +28,7 @@ static OS_STK thread_stk[MAX_LWIP_THREADS][THREAD_STK_SIZE];
 void sys_init(void)
 {
   u8_t err;
-  
+
   MboxMem = OSMemCreate((void*)MboxMemArea,TOTAL_MBOX_NUM,
                         sizeof(struct sys_mbox),&err);
   TimeoutsList.next = NULL;
@@ -39,7 +39,7 @@ void sys_init(void)
 
 /*-----------------------------------------------------
  - Function Name: sys_sem_new()
- - Description:   
+ - Description:
  - Input:         count
  - Output:        None
  - Return:        sys_sem_t type semaphore
@@ -53,7 +53,7 @@ sys_sem_t sys_sem_new(u8_t count)
 
 /*-----------------------------------------------------
  - Function Name: sys_sem_free()
- - Description:   
+ - Description:
  - Input:         sem
  - Output:        None
  - Return:        None
@@ -67,7 +67,7 @@ void sys_sem_free(sys_sem_t sem)
 
 /*-----------------------------------------------------
  - Function Name: sys_sem_signal()
- - Description:   
+ - Description:
  - Input:         sem
  - Output:        None
  - Return:        None
@@ -80,7 +80,7 @@ void sys_sem_signal(sys_sem_t sem)
 
 /*-----------------------------------------------------
  - Function Name: sys_arch_sem_wait()
- - Description:   
+ - Description:
  - Input:         sem, timeout
  - Output:        None
  - Return:        the waiting time
@@ -93,7 +93,7 @@ u32_t sys_arch_sem_wait(sys_sem_t sem, u32_t timeout)
   u32_t ticks;
   u8_t err;
   OS_SEM_DATA semdata;
-  
+
   OSSemQuery(sem,&semdata);
   if (timeout!=0) {
     ticks = timeout*OS_TICKS_PER_SEC/1000;
@@ -115,7 +115,7 @@ u32_t sys_arch_sem_wait(sys_sem_t sem, u32_t timeout)
   } else {
     OSSemPend(sem, 0, &err);
     if(err != OS_ERR_NONE)
-      return SYS_ARCH_TIMEOUT; 
+      return SYS_ARCH_TIMEOUT;
   }
   return 0;
 }
@@ -123,7 +123,7 @@ u32_t sys_arch_sem_wait(sys_sem_t sem, u32_t timeout)
 
 /*-----------------------------------------------------
  - Function Name: sys_mbox_new()
- - Description:   
+ - Description:
  - Input:         size - the size of mbox,but is ignored in this implementation
  - Output:        None
  - Return:        sys_mbox_t type mbox
@@ -136,7 +136,7 @@ sys_mbox_t sys_mbox_new(int size)
 {
   sys_mbox_t mbox;
   u8_t err;
-  
+
   size = size;  //avoid compiler warnning
   mbox = (sys_mbox_t)OSMemGet(MboxMem, &err);
   if (err == OS_ERR_NONE) {
@@ -153,7 +153,7 @@ sys_mbox_t sys_mbox_new(int size)
 
 /*-----------------------------------------------------
  - Function Name: sys_mbox_free()
- - Description:   
+ - Description:
  - Input:         mbox
  - Output:        None
  - Return:        None
@@ -164,7 +164,7 @@ sys_mbox_t sys_mbox_new(int size)
 void sys_mbox_free(sys_mbox_t mbox)
 {
   u8_t err;
-  
+
   OSQFlush(mbox->queue);
   OSQDel(mbox->queue, OS_DEL_ALWAYS, &err);
   OSMemPut(MboxMem, mbox);  // 释放邮箱申请的内存
@@ -172,7 +172,7 @@ void sys_mbox_free(sys_mbox_t mbox)
 
 /*-----------------------------------------------------
  - Function Name: sys_mbox_post()
- - Description:   
+ - Description:
  - Input:         mbox, msg
  - Output:        None
  - Return:        None
@@ -190,7 +190,7 @@ void sys_mbox_post(sys_mbox_t mbox, void *msg)
 
 /*-----------------------------------------------------
  - Function Name: sys_mbox_trypost()
- - Description:   
+ - Description:
  - Input:         mbox, msg
  - Output:        None
  - Return:        err information
@@ -204,14 +204,14 @@ err_t sys_mbox_trypost(sys_mbox_t mbox, void *msg)
     msg = (void*)&NullMsg;
   }
   if (OSQPost(mbox->queue, msg) != OS_ERR_NONE) {
-    return ERR_MEM; 
+    return ERR_MEM;
   }
   return ERR_OK;
 }
 
 /*-----------------------------------------------------
  - Function Name: sys_arch_fetch()
- - Description:   
+ - Description:
  - Input:         mbox, timeout
  - Output:        msg
  - Return:        the waiting time
@@ -225,7 +225,7 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout)
   u32_t ticks;
   u8_t err;
   OS_Q_DATA q_data;
-  
+
   OSQQuery(mbox->queue, &q_data);
   if (timeout != 0) {
     ticks = timeout*OS_TICKS_PER_SEC/1000;
@@ -263,7 +263,7 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout)
 
 /*-----------------------------------------------------
  - Function Name: sys_arch_mbox_tryfetch()
- - Description:   
+ - Description:
  - Input:         mbox
  - Output:        msg
  - Return:        the result of calling
@@ -273,7 +273,7 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout)
 u32_t sys_arch_mbox_tryfetch(sys_mbox_t mbox, void **msg)
 {
   u8_t err;
-  
+
   *msg = OSQAccept(mbox->queue, &err);
   if (err == OS_ERR_NONE) {
     if(*msg == (void*)&NullMsg) {
@@ -281,12 +281,12 @@ u32_t sys_arch_mbox_tryfetch(sys_mbox_t mbox, void **msg)
     }
     return 0;
   }
-  return SYS_MBOX_EMPTY;  
+  return SYS_MBOX_EMPTY;
 }
 
 /*-----------------------------------------------------
  - Function Name: sys_arch_timeouts()
- - Description:   
+ - Description:
  - Input:         None
  - Output:        None
  - Return:        指向struct sys_timeouts类型的指针变量
@@ -299,7 +299,7 @@ struct sys_timeouts *sys_arch_timeouts(void)
 
 /*-----------------------------------------------------
  - Function Name: sys_thread_new()
- - Description:   
+ - Description:
  - Input:         name,      线程名称
                   thread,    指向线程函数的指针
                   arg,       线程创建时传入的参数
@@ -309,27 +309,31 @@ struct sys_timeouts *sys_arch_timeouts(void)
  - Return:        the id of the new created thread
  - Attention:     创建一个新线程
 -----------------------------------------------------*/
-sys_thread_t sys_thread_new(char *name, 
+sys_thread_t sys_thread_new(char *name,
                             void (*thread)(void *arg),
-                            void *arg, 
-                            int stacksize, 
+                            void *arg,
+                            int stacksize,
                             int prio )
 {
-  u16_t err, i;
-  
+  u16_t err, i, j;
+
   name = name;  //ignore argument name,avoid compiler warnning
   stacksize = stacksize;  //ignore argument stacksize,avoid compiler warnning
+  j = 0xffff;
   for (i = 0; i < MAX_LWIP_THREADS; i++) {
     if (thread_mount[i] == (0x0100 | prio)) {
       LWIP_ASSERT("sys_thread_new: prio exist", 0);
       return (sys_thread_t)prio;
-    } else if (thread_mount[i] == 0) {
-      err = OSTaskCreate(thread, arg, &thread_stk[i][THREAD_STK_SIZE-1], prio);
-      LWIP_ASSERT("sys_thread_new: task create", err == OS_ERR_NONE);
-      if (err == OS_ERR_NONE) {
-        thread_mount[i] = 0x0100 | prio;
-        return (sys_thread_t)prio;
-      }
+    } else if (thread_mount[i] == 0 && j == 0xffff) {
+      j = i;
+    }
+  }
+  if (j != 0xffff) {
+    err = OSTaskCreate(thread, arg, &thread_stk[i][THREAD_STK_SIZE-1], prio);
+    LWIP_ASSERT("sys_thread_new: task create", err == OS_ERR_NONE);
+    if (err == OS_ERR_NONE) {
+      thread_mount[i] = 0x0100 | prio;
+      return (sys_thread_t)prio;
     }
   }
   LWIP_ASSERT("sys_thread_new: stack pool full", 0);

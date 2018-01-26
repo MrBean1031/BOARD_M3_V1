@@ -41,6 +41,7 @@ struct access_system {
 #define ACCESS_BACK_EXISTING   0x12
 #define ACCESS_BACK_AUTH_OK    0x13
 #define ACCESS_BACK_AUTH_ERR   0x14
+#define ACCESS_BACK_INVALID    0x1f
 
 
 #define ACCESS_RECORD_MAX_NAME_LEN      20

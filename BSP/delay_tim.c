@@ -7,7 +7,7 @@
                     2.需要编写中断服务子程序（ISR）
 										3.TimeMeasure()，为了时间测量的精度，没有使用任务同步机制，注意不要重入
  */
- 
+
 #include "delay_tim.h"
 #include "includes.h"
 
@@ -29,7 +29,7 @@ uint8_t MeasureCnt;    //测量计数
 void TIM7_TimeBase_Config(void)
 {
 	TIM_TimeBaseInitTypeDef TimeBaseStruct;
-	
+
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM7, ENABLE);
 	// 定时器的时钟频率 fCKCNT=TIMxCLK/(1+TIM_Prescaler)
 	TimeBaseStruct.TIM_Prescaler = 0;
@@ -40,7 +40,7 @@ void TIM7_TimeBase_Config(void)
 	// 输入滤波器分频系数，这里没有用到
 	TimeBaseStruct.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseInit(TIM7,&TimeBaseStruct);
-	
+
 	// 使能预装载寄存器
 	TIM_ARRPreloadConfig(TIM7, ENABLE);
 	// 使能TIM7更新中断
@@ -51,7 +51,7 @@ void TIM7_TimeBase_Config(void)
 	MeasureCnt = 0;
 	timerticks = 0;
 }
- 
+
 /*-----------------------------------------------------
  - Function Name: Delay_us()
  - Description:   us级延时服务
@@ -95,7 +95,7 @@ uint32_t TimeMeasure(void)
       break;
     case MEASURE_STATE_WORKING:
       MeasureState = MEASURE_STATE_STOP;
-      time = MeasureCnt *10;
+      time = MeasureCnt *100;
       break;
     default:
       MeasureState = MEASURE_STATE_STOP;
@@ -127,7 +127,7 @@ void TIM7_IRQServer(void)
 void NVIC_Configuration(void)
 {
 	NVIC_InitTypeDef NVIC_InitStruct;
-	
+
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_3);
 	NVIC_InitStruct.NVIC_IRQChannel = TIM7_IRQn;
 	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 1;

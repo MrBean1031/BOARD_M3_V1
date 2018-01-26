@@ -149,15 +149,11 @@ void access_gettime(void *arg)
       aCmd = ACCESS_CMD_GETTIME;
       err = netconn_write(aSystem.pconn, &aCmd, 1, 0);
       if (err != ERR_OK) {
-        aSystem.conn_status = DISCONNECTED;
-        aSystem.pconn = 0;
         goto __exit0;
       }
       //接收日期数据
       inbuf = netconn_recv(aSystem.pconn);
       if (inbuf == 0) {
-        aSystem.conn_status = DISCONNECTED;
-        aSystem.pconn = 0;
         goto __exit0;
       } else {
         netbuf_data(inbuf, (void**)&p, &len);
@@ -167,8 +163,6 @@ void access_gettime(void *arg)
       //接收时间数据
       inbuf = netconn_recv(aSystem.pconn);
       if (inbuf == 0) {
-        aSystem.conn_status = DISCONNECTED;
-        aSystem.pconn = 0;
         goto __exit0;
       } else {
         netbuf_data(inbuf, (void**)&p, &len);
@@ -182,7 +176,11 @@ void access_gettime(void *arg)
         }
       }
     }
+    OSTimeDlyHMSM(0, 0, 30, 0);
+    continue;
 __exit0:
+    aSystem.conn_status = DISCONNECTED;
+    aSystem.pconn = 0;
     OSTimeDlyHMSM(0,0,30,0);  //延时20秒
   }
 }
@@ -489,7 +487,7 @@ void access_handler(void *arg)
   while (1) {
 #if LWIP_DHCP
     while (enc28j60.dhcp->state != DHCP_BOUND) {
-      OSTimeDly(100);
+      OSTimeDly(40);
     }
     aSystem.local_addr = enc28j60.dhcp->offered_ip_addr;
 #else
@@ -516,7 +514,7 @@ void access_handler(void *arg)
           switch (aSystem.cur_mode) {
             case ACCESS:
               aCmd = ACCESS_CMD_ACCESS;
-              err = netconn_write(conn, &aCmd, 1, 1);
+              err = netconn_write(conn, &aCmd, 1, 0);
               if (err != ERR_OK) {
                 printf("ACCESS MODE: netconn_write() fail with %d while sending command\r\n", err);
                 aSystem.conn_status = DISCONNECTED;
@@ -526,7 +524,7 @@ void access_handler(void *arg)
               //向服务器发送读出的卡ID
               for (i = 0; i < 4; i++)
                 aRecord.card_id[i] = cInfo.uid[i];
-              err = netconn_write(conn, (const void*)&aRecord, sizeof(struct access_record), 1);
+              err = netconn_write(conn, (const void*)&aRecord, sizeof(struct access_record), 0);
               if (err != ERR_OK) {
                 printf("ACCESS MODE: netconn_write() fail with %d while sending record\r\n", err);
                 aSystem.conn_status = DISCONNECTED;
@@ -564,14 +562,15 @@ void access_handler(void *arg)
                   aMsg.pRecord = NULL;
                 }
                 door_unlock();  //开门
-                netbuf_delete(inbuf);
               }
               else if (*pData == ACCESS_BACK_NOTFOUND) {
                 puts("ACCESS MODE: get backlog \"ACCESS_BACK_NOTFOUND\"\r\n");
-                netbuf_delete(inbuf);
                 aMsg.value = ACCESS_BACK_NOTFOUND;
                 aMsg.pRecord = NULL;
+              } else {
+                aMsg.value = ACCESS_BACK_INVALID;
               }
+              netbuf_delete(inbuf);
               aMsg.type = ACCESS;
               while(OSMboxPost(mbox_access, &aMsg) == OS_ERR_MBOX_FULL)
                 OSTimeDly(10);
@@ -585,7 +584,7 @@ void access_handler(void *arg)
               else if (aSystem.stage == NORMAL) {
                 aCmd = ACCESS_CMD_REGISTER;
               }
-              err = netconn_write(conn, &aCmd, 1, 1);
+              err = netconn_write(conn, &aCmd, 1, 0);
               if (err != ERR_OK) {
                 printf("REGISTER MODE: netconn_write() fail with %d while sending command\r\n", err);
                 aSystem.conn_status = DISCONNECTED;
@@ -595,7 +594,7 @@ void access_handler(void *arg)
               //向服务器发送读出的卡ID
               for (i = 0; i < 4; i++)
                 aRecord.card_id[i] = cInfo.uid[i];
-              err = netconn_write(conn, (const void*)&aRecord, sizeof(struct access_record), 1);
+              err = netconn_write(conn, (const void*)&aRecord, sizeof(struct access_record), 0);
               if (err != ERR_OK) {
                 printf("REGISTER MODE: netconn_write() fail with %d while sending record\r\n", err);
                 aSystem.conn_status = DISCONNECTED;
@@ -626,6 +625,8 @@ void access_handler(void *arg)
                     AuthErrCnt = 0;
                   }
                   aMsg.value = ACCESS_BACK_AUTH_ERR;
+                } else {
+                  aMsg.value = ACCESS_BACK_INVALID;
                 }
               }
               else if (aSystem.stage == NORMAL) {
@@ -636,6 +637,8 @@ void access_handler(void *arg)
                 else if (*pData == ACCESS_BACK_EXISTING) {
                   puts("REGISTER MODE: get backlog \"ACCESS_BACK_EXISTING\"\r\n");
                   aMsg.value = ACCESS_BACK_EXISTING;
+                } else {
+                  aMsg.value = ACCESS_BACK_INVALID;
                 }
               }
               netbuf_delete(inbuf);
@@ -654,7 +657,7 @@ void access_handler(void *arg)
               else if(aSystem.stage == NORMAL) {
                 aCmd = ACCESS_CMD_REMOVE;
               }
-              err = netconn_write(conn, &aCmd, 1, 1);
+              err = netconn_write(conn, &aCmd, 1, 0);
               if (err != ERR_OK) {
                 printf("REMOVE MODE: netconn_write() fail with %d while sending command\r\n", err);
                 aSystem.conn_status = DISCONNECTED;
@@ -664,7 +667,7 @@ void access_handler(void *arg)
               //向服务器发送读出的卡ID
               for (i = 0; i < 4; i++)
                 aRecord.card_id[i] = cInfo.uid[i];
-              err = netconn_write(conn, (const void*)&aRecord, sizeof(struct access_record), 1);
+              err = netconn_write(conn, (const void*)&aRecord, sizeof(struct access_record), 0);
               if (err != ERR_OK) {
                 printf("REMOVE MODE: netconn_write() fail with %d while sending record\r\n", err);
                 aSystem.conn_status = DISCONNECTED;
@@ -695,6 +698,8 @@ void access_handler(void *arg)
                     AuthErrCnt = 0;
                   }
                   aMsg.value = ACCESS_BACK_AUTH_ERR;
+                } else {
+                  aMsg.value = ACCESS_BACK_INVALID;
                 }
               }
               else if (aSystem.stage == NORMAL) {
@@ -705,6 +710,8 @@ void access_handler(void *arg)
                 else if (*pData == ACCESS_BACK_NOTFOUND) {
                   puts("REMOVE MODE: get backlog \"ACCESS_BACK_NOTFOUND\"\r\n");
                   aMsg.value = ACCESS_BACK_NOTFOUND;
+                } else {
+                  aMsg.value = ACCESS_BACK_INVALID;
                 }
               }
               netbuf_delete(inbuf);
